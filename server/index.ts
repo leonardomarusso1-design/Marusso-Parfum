@@ -10,11 +10,12 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Serve static files from dist/public in production
+  // Serve static files from dist/public
+  // In Vercel, __dirname points to /var/task, so we need to resolve relative to that
   const staticPath =
     process.env.NODE_ENV === "production"
-      ? path.resolve(__dirname, "public")
-      : path.resolve(__dirname, "..", "dist", "public");
+      ? path.resolve(__dirname, "..", "public") // Vercel structure: /var/task/../public
+      : path.resolve(__dirname, "..", "dist", "public"); // Local dev
 
   app.use(express.static(staticPath));
 
