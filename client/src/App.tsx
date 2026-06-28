@@ -6,8 +6,10 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import OfferPage from "./pages/OfferPage";
+import FAQ from "./pages/FAQ";
 import PromoBanner from "./components/PromoBanner";
 import FloatingChat from "./components/FloatingChat";
+import NewsletterPopup from "./components/NewsletterPopup";
 import { useAnalytics } from "./hooks/useAnalytics";
 
 
@@ -16,6 +18,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/oferta" component={OfferPage} />
+      <Route path="/faq" component={FAQ} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -40,6 +43,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <PromoBanner />
+          <NewsletterPopup />
           <Router />
           <FloatingChat />
         </TooltipProvider>

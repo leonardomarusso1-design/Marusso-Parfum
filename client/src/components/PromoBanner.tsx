@@ -11,12 +11,19 @@ export default function PromoBanner() {
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      // Define o tempo de término da promoção (24 horas a partir de agora)
-      const promotionEnd = new Date();
-      promotionEnd.setHours(promotionEnd.getHours() + 24);
+      // Verifica se há um tempo de término salvo no localStorage
+      let promotionEnd = localStorage.getItem("promotionEnd");
+
+      if (!promotionEnd) {
+        // Se não houver, cria um novo (24 horas a partir de agora)
+        const newEnd = new Date();
+        newEnd.setHours(newEnd.getHours() + 24);
+        promotionEnd = newEnd.toISOString();
+        localStorage.setItem("promotionEnd", promotionEnd);
+      }
 
       const now = new Date();
-      const difference = promotionEnd.getTime() - now.getTime();
+      const difference = new Date(promotionEnd).getTime() - now.getTime();
 
       if (difference > 0) {
         setTimeLeft({
@@ -24,6 +31,10 @@ export default function PromoBanner() {
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
         });
+      } else {
+        // Promoção expirou, reseta
+        localStorage.removeItem("promotionEnd");
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
