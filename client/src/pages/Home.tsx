@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import ProductsSection from "@/components/ProductsSection";
+import ReviewsSection from "@/components/ReviewsSection";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
       <HeroSection />
       <WhyChooseUs />
       <ProductsSection />
+      <ReviewsSection />
       <Footer />
     </div>
   );
