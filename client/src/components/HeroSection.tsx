@@ -48,7 +48,7 @@ export default function HeroSection() {
         </div>
 
         {/* Trust Badges */}
-        <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-300">
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-300 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-primary text-xl">✓</span>
             <span>Produtos Originais</span>
@@ -61,6 +61,12 @@ export default function HeroSection() {
             <span className="text-primary text-xl">✓</span>
             <span>Frete Rápido</span>
           </div>
+        </div>
+
+        {/* Mercado Livre Badge */}
+        <div className="flex items-center justify-center gap-2 text-sm text-gray-300">
+          <span>Compre com segurança no</span>
+          <span className="font-bold text-yellow-400">Mercado Livre</span>
         </div>
       </div>
 

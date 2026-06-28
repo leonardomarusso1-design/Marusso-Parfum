@@ -58,8 +58,20 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
 
-        {/* Volume */}
-        <p className="text-xs text-muted-foreground mb-3">{product.volume}</p>
+        {/* Sold Count & Rating */}
+        {(product.soldCount || product.rating) && (
+          <div className="flex items-center gap-2 mb-3">
+            {product.rating && (
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-primary fill-primary" />
+                <span className="text-xs text-muted-foreground">{product.rating}</span>
+              </div>
+            )}
+            {product.soldCount && (
+              <span className="text-xs text-muted-foreground text-right flex-1">{product.soldCount}</span>
+            )}
+          </div>
+        )}
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mb-3">

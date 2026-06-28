@@ -24,13 +24,29 @@ export default function ProductsSection() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="mt-16 text-center">
+        <div className="mt-16 text-center bg-primary/5 rounded-lg p-6 border border-primary/20">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <span className="text-2xl">🛒</span>
+            <p className="font-semibold text-foreground">
+              Compre com Segurança no <span className="text-primary">Mercado Livre</span>
+            </p>
+          </div>
           <p className="text-muted-foreground mb-4">
-            Todos os produtos com compra 100% segura no Mercado Livre
+            Todos os produtos com compra 100% segura e protegida
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-primary">
-            <span>✓</span>
-            <span>Frete grátis em selecionados</span>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-primary">
+            <div className="flex items-center gap-1">
+              <span>✓</span>
+              <span>Produtos Originais</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>✓</span>
+              <span>Frete Rápido</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>✓</span>
+              <span>Garantia de Compra</span>
+            </div>
           </div>
         </div>
       </div>

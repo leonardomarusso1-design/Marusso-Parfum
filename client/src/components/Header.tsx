@@ -12,8 +12,8 @@ export default function Header() {
             className="w-10 h-10"
           />
           <div>
-            <h1 className="text-lg font-bold text-primary">PERFUMES</h1>
-            <p className="text-xs text-muted-foreground">Árabes Originais</p>
+            <h1 className="text-lg font-bold text-primary">MARUSSO</h1>
+            <p className="text-xs text-muted-foreground">Parfum</p>
           </div>
         </div>
 

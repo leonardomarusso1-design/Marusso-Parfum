@@ -13,7 +13,7 @@ export default function Footer() {
                 alt="Perfumes Árabes"
                 className="w-8 h-8"
               />
-              <h3 className="font-bold text-foreground">Perfumes Árabes</h3>
+              <h3 className="font-bold text-foreground">Marusso Parfum</h3>
             </div>
             <p className="text-sm text-muted-foreground">
               Fragrâncias luxuosas e exclusivas com autenticidade garantida.
@@ -57,7 +57,7 @@ export default function Footer() {
         <div className="border-t border-border pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2026 Perfumes Árabes Originais. Todos os direitos reservados.
+              © 2026 Marusso Parfum. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Feito com</span>

@@ -2,126 +2,115 @@ export interface Product {
   id: string;
   name: string;
   brand: string;
-  volume: string;
   price: number;
   originalPrice?: number;
   discount?: number;
+  image: string;
   description: string;
   features: string[];
   affiliateLink: string;
-  image: string;
   badge?: string;
+  soldCount?: string;
+  rating?: number;
 }
 
 export const products: Product[] = [
   {
     id: "sabah-100ml",
-    name: "Perfume Sedutor Árabe Sabah",
-    brand: "Al Wataniah",
-    volume: "100ml",
+    name: "Perfume Sedutor Árabe Sabah 100ml Original Feminino",
+    brand: "AL WATANIAH",
     price: 109.60,
     originalPrice: 230,
     discount: 52,
-    description: "Sofisticação que marca presença por onde passa. Uma fragrância envolvente com notas quentes e duradouras.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/TZuMrFIehNqbyrLI.png",
+    description: "Perfume feminino original com fixação prolongada",
     features: [
-      "Fixação incrível",
-      "Aromas exclusivos",
       "Produto original",
-      "Compra segura"
+      "Compra 100% segura",
+      "Frete grátis"
     ],
-    affiliateLink: "https://meli.la/27YG76P",
-    image: "/manus-storage/product-sabah_79ffd90e.png",
-    badge: "MAIS VENDIDO"
+    affiliateLink: "https://meli.la/12WRDHD",
+    badge: "MAIS VENDIDO",
+    soldCount: "+100 mil vendidos",
+    rating: 4.7
   },
   {
     id: "bareeq-100ml",
-    name: "Perfume Árabe Al Wataniah Bareeq Al Dhahab",
-    brand: "Al Wataniah",
-    volume: "100ml",
+    name: "Perfume Árabe Al Wataniah Bareeq Al Dhahab 100ml EDP",
+    brand: "AL WATANIAH",
     price: 189,
-    originalPrice: 250,
-    discount: 24,
-    description: "Bareeq Al Dhahab significa 'Raio de Ouro'. Uma fragrância luxuosa com notas orientais profundas.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/BFLskGsPAiyEAxOK.png",
+    description: "Perfume árabe premium com aroma exclusivo",
     features: [
-      "Fixação prolongada",
-      "Fragrâncias únicas",
       "100% original",
-      "Compra 100% segura"
+      "Compra 100% segura",
+      "Frete grátis"
     ],
-    affiliateLink: "https://meli.la/2Cup1u2",
-    image: "/manus-storage/product-bareeq_813829d9.png",
+    affiliateLink: "https://meli.la/2DNbEE3",
+    soldCount: "+10 mil vendidos",
+    rating: 4.6
   },
   {
     id: "salvo-intense-100ml",
-    name: "Perfume Masculino Maison Alhambra Salvo Intense",
-    brand: "Maison Alhambra",
-    volume: "100ml",
+    name: "Perfume Masculino Maison Alhambra Salvo Intense EDP 100ml",
+    brand: "MAISON ALHAMBRA",
     price: 215,
-    originalPrice: 280,
-    discount: 23,
-    description: "Salvo Intense é uma fragrância sofisticada para homens que buscam presença marcante e elegância.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/ODNLTEiJRGpmFOoB.png",
+    description: "Perfume masculino intenso com fixação duradoura",
     features: [
-      "Alta qualidade",
-      "Aromas exclusivos",
       "Produtos originais",
-      "Compra segura"
+      "Compra segura",
+      "Frete rápido"
     ],
-    affiliateLink: "https://meli.la/244Nv4d",
-    image: "/manus-storage/product-salvo_a848839f.png",
+    affiliateLink: "https://meli.la/2CcJ9P4",
+    soldCount: "+10 mil vendidos",
+    rating: 4.7
   },
   {
     id: "fekhar-black-100ml",
-    name: "Lattafe Fekhar Black Edp 100ml",
-    brand: "Lattafa",
-    volume: "100ml",
+    name: "Lattafa Fekhar Black EDP 100ml Perfume Árabe Masculino",
+    brand: "LATTAFA",
     price: 259,
-    originalPrice: 320,
-    discount: 19,
-    description: "Fekhar Black é uma fragrância intensa e sofisticada. Perfeita para quem busca luxo e exclusividade.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/HRvSsDGErUzvYnLM.png",
+    description: "Perfume árabe premium com aroma sofisticado",
     features: [
-      "Fixação incrível",
-      "Fragrâncias exclusivas",
       "Produto original",
-      "Compra segura"
+      "Compra segura",
+      "Frete rápido"
     ],
-    affiliateLink: "https://meli.la/2CcJ9P4",
-    image: "/manus-storage/product-fekhar_74086b58.png",
-    badge: "PREMIUM"
+    affiliateLink: "https://meli.la/244Nv4d",
+    badge: "PREMIUM",
+    soldCount: "+10 mil vendidos",
+    rating: 4.8
   },
   {
     id: "yara-tous-100ml",
     name: "Lattafa Perfume Yara Tous Eau de Parfum 100ml",
-    brand: "Lattafa",
-    volume: "100ml",
+    brand: "LATTAFA",
     price: 239,
-    originalPrice: 290,
-    discount: 18,
-    description: "Yara Tous é uma fragrância feminina luxuosa com notas florais e orientais que conquistam.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/inWRWUjRNeixrnpY.png",
+    description: "Perfume feminino elegante com fixação prolongada",
     features: [
-      "Fixação prolongada",
-      "Aromas exclusivos",
       "100% original",
-      "Compra 100% segura"
+      "Compra 100% segura",
+      "Frete grátis"
     ],
-    affiliateLink: "https://meli.la/2DNbEE3",
-    image: "/manus-storage/product-yara_b5714e04.png",
+    affiliateLink: "https://meli.la/2Cup1u2",
+    soldCount: "+1 mil vendidos",
+    rating: 4.7
   },
   {
     id: "asad-100ml",
-    name: "Perfume Lattafa Asad 100ml Eau De Parfum",
-    brand: "Lattafa",
-    volume: "100ml",
+    name: "Lattafa Perfume Asad 100ml Eau De Parfum",
+    brand: "LATTAFA",
     price: 156.90,
-    originalPrice: 220,
-    discount: 29,
-    description: "Asad significa 'Leão' em árabe. Uma fragrância poderosa e marcante para quem busca destaque.",
+    image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/elfabHWFmMYcQzxc.png",
+    description: "Perfume árabe com aroma exclusivo e sofisticado",
     features: [
-      "Alta fixação",
-      "Fragrâncias únicas",
       "Produtos originais",
-      "Compra segura"
+      "Compra segura",
+      "Frete rápido"
     ],
-    affiliateLink: "https://meli.la/12WRDHD",
-    image: "/manus-storage/product-asad_07bc21e0.png",
+    affiliateLink: "https://meli.la/27YG76P"
   }
 ];
