@@ -30,7 +30,7 @@ export const products: Product[] = [
       "Compra segura"
     ],
     affiliateLink: "https://meli.la/27YG76P",
-    image: "/manus-storage/product-sabah_placeholder.png",
+    image: "/manus-storage/product-sabah_79ffd90e.png",
     badge: "MAIS VENDIDO"
   },
   {
@@ -49,7 +49,7 @@ export const products: Product[] = [
       "Compra 100% segura"
     ],
     affiliateLink: "https://meli.la/2Cup1u2",
-    image: "/manus-storage/product-bareeq_placeholder.png"
+    image: "/manus-storage/product-bareeq_813829d9.png",
   },
   {
     id: "salvo-intense-100ml",
@@ -67,7 +67,7 @@ export const products: Product[] = [
       "Compra segura"
     ],
     affiliateLink: "https://meli.la/244Nv4d",
-    image: "/manus-storage/product-salvo_placeholder.png"
+    image: "/manus-storage/product-salvo_a848839f.png",
   },
   {
     id: "fekhar-black-100ml",
@@ -85,7 +85,7 @@ export const products: Product[] = [
       "Compra segura"
     ],
     affiliateLink: "https://meli.la/2CcJ9P4",
-    image: "/manus-storage/product-fekhar_placeholder.png",
+    image: "/manus-storage/product-fekhar_74086b58.png",
     badge: "PREMIUM"
   },
   {
@@ -104,7 +104,7 @@ export const products: Product[] = [
       "Compra 100% segura"
     ],
     affiliateLink: "https://meli.la/2DNbEE3",
-    image: "/manus-storage/product-yara_placeholder.png"
+    image: "/manus-storage/product-yara_b5714e04.png",
   },
   {
     id: "asad-100ml",
@@ -122,6 +122,6 @@ export const products: Product[] = [
       "Compra segura"
     ],
     affiliateLink: "https://meli.la/12WRDHD",
-    image: "/manus-storage/product-asad_placeholder.png"
+    image: "/manus-storage/product-asad_07bc21e0.png",
   }
 ];

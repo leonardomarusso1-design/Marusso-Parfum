@@ -31,10 +31,13 @@ export default function Header() {
         </nav>
 
         {/* CTA Button */}
-        <button className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium">
+        <a
+          href="/oferta"
+          className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-medium"
+        >
           <ShoppingBag className="w-4 h-4" />
-          Explorar
-        </button>
+          Oferta
+        </a>
       </div>
     </header>
   );

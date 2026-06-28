@@ -5,13 +5,18 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import OfferPage from "./pages/OfferPage";
+import PromoBanner from "./components/PromoBanner";
+import FloatingChat from "./components/FloatingChat";
+import { useAnalytics } from "./hooks/useAnalytics";
 
 
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
+      <Route path="/" component={Home} />
+      <Route path="/oferta" component={OfferPage} />
+      <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
     </Switch>
@@ -24,6 +29,8 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  useAnalytics();
+
   return (
     <ErrorBoundary>
       <ThemeProvider
@@ -32,7 +39,9 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <PromoBanner />
           <Router />
+          <FloatingChat />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
