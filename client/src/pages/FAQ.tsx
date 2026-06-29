@@ -105,7 +105,7 @@ export default function FAQ() {
     : faqItems;
 
   return (
-    <div className="min-h-screen bg-background pt-32 pb-20">
+    <div className="min-h-screen bg-background pt-8 pb-20">
       <div className="container">
         {/* Header */}
         <div className="text-center mb-16">

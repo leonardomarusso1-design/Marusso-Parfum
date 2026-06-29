@@ -3,21 +3,20 @@ import { ShoppingBag, MessageCircle } from "lucide-react";
 export default function Header() {
   return (
     <div className="sticky top-0 z-50">
-      {/* Top trust strip */}
+      {/* Top strip — sem "Originais Garantidos" */}
       <div className="bg-foreground text-background text-center py-2 px-4 text-xs font-semibold tracking-wide">
-        🛡 Parceiro Mercado Livre &nbsp;·&nbsp; ✅ Originais Garantidos &nbsp;·&nbsp; 🚚 Frete Full &nbsp;·&nbsp; ⭐ +5.000 Avaliações Verificadas
+        🛡 Parceiro Mercado Livre &nbsp;·&nbsp; 🚚 Frete Full &nbsp;·&nbsp; ⭐ +5.000 Avaliações Verificadas
       </div>
 
-      {/* Main header */}
       <header className="w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
         <div className="container flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-black text-sm">M</div>
-            <div>
-              <h1 className="text-base font-black text-foreground tracking-wide leading-none">MARUSSO</h1>
-              <p className="text-[10px] text-muted-foreground tracking-widest">PARFUM</p>
-            </div>
+          <a href="/" className="flex items-center">
+            <img
+              src="/products/logomarca.png"
+              alt="Marusso Parfum"
+              className="h-10 w-auto object-contain"
+            />
           </a>
 
           {/* Nav */}
@@ -25,11 +24,12 @@ export default function Header() {
             <a href="#produtos" className="text-sm text-foreground hover:text-primary transition-colors font-medium">Produtos</a>
             <a href="#como-funciona" className="text-sm text-foreground hover:text-primary transition-colors font-medium">Como Funciona</a>
             <a href="#avaliacoes" className="text-sm text-foreground hover:text-primary transition-colors font-medium">Avaliações</a>
+            <a href="/faq" className="text-sm text-foreground hover:text-primary transition-colors font-medium">FAQ</a>
           </nav>
 
           {/* CTAs */}
           <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-yellow-500/40 bg-yellow-50">
+            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-yellow-400/40 bg-yellow-50">
               <span className="text-yellow-600 text-xs font-bold">🛒 Mercado Livre</span>
             </div>
             <a
