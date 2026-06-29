@@ -1,173 +1,185 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width">
   <title>Marusso Parfum</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      width: 360px;
-      min-height: 200px;
-      background: #fff;
-      color: #111;
-    }
-    header {
-      background: #7C3AED;
-      color: white;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    header h1 { font-size: 15px; font-weight: 700; }
-    header p { font-size: 10px; opacity: 0.8; margin-top: 1px; }
-    .body { padding: 16px; }
+    body { width: 360px; min-height: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px; color: #111; background: #fff; }
 
-    /* ── Estado vazio ── */
-    .empty { text-align: center; padding: 30px 16px; color: #888; font-size: 13px; }
-    .empty .icon { font-size: 36px; margin-bottom: 8px; }
+    .header { background: linear-gradient(135deg,#7c3aed,#a855f7); padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+    .header-logo { width: 32px; height: 32px; background: rgba(255,255,255,.2); border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .header-title { color: white; font-weight: 900; font-size: 15px; }
+    .header-sub { color: rgba(255,255,255,.7); font-size: 11px; }
 
-    /* ── Preview do produto ── */
-    .product-preview {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      background: #f8f8f8;
-      border-radius: 10px;
-      padding: 10px;
-    }
-    .product-preview img { width: 64px; height: 64px; object-fit: contain; border-radius: 6px; background: white; }
-    .product-info { flex: 1; min-width: 0; }
-    .product-info .name { font-size: 12px; font-weight: 600; line-clamp: 2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .product-info .price { font-size: 16px; font-weight: 800; color: #7C3AED; margin-top: 4px; }
-    .product-info .brand { font-size: 10px; color: #888; text-transform: uppercase; }
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 1px solid #e5e7eb; }
+    .tab-btn { flex: 1; padding: 10px; font-size: 12px; font-weight: 700; color: #6b7280; background: none; border: none;
+      cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+    .tab-btn.active { color: #7c3aed; border-bottom-color: #7c3aed; }
+    .tab-content { display: none; padding: 14px; }
+    .tab-content:first-of-type { }
 
-    /* ── Formulário ── */
-    .field { margin-bottom: 12px; }
-    label { display: block; font-size: 11px; font-weight: 600; color: #555; margin-bottom: 4px; }
-    input, select {
-      width: 100%; padding: 8px 10px; border: 1px solid #ddd;
-      border-radius: 8px; font-size: 12px; outline: none;
-      transition: border-color 0.2s;
-    }
-    input:focus, select:focus { border-color: #7C3AED; }
+    /* Empty */
+    #empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 30px 20px; text-align: center; gap: 8px; }
+    .empty-icon { font-size: 40px; }
+    .empty-title { font-weight: 800; color: #111; }
+    .empty-sub { color: #6b7280; font-size: 12px; line-height: 1.5; }
 
-    .btn {
-      width: 100%; padding: 12px; border: none; border-radius: 10px;
-      font-size: 14px; font-weight: 700; cursor: pointer;
-      transition: all 0.15s;
-    }
-    .btn-primary { background: #7C3AED; color: white; }
-    .btn-primary:hover { background: #6D28D9; }
-    .btn-primary:disabled { background: #c4b5fd; cursor: not-allowed; }
-    .btn-secondary { background: #f3f3f3; color: #444; margin-top: 8px; font-size: 12px; }
+    /* Product panel */
+    #product-panel, #bulk-panel { display: none; }
+    .product-preview { display: flex; gap: 10px; padding: 12px; background: #faf5ff; border-radius: 12px; margin-bottom: 12px; }
+    #prod-img { width: 70px; height: 70px; object-fit: contain; border-radius: 8px; background: white; }
+    .prod-info { flex: 1; min-width: 0; }
+    #prod-name { font-weight: 800; font-size: 12px; line-height: 1.4; margin-bottom: 4px; }
+    .prod-prices { display: flex; align-items: baseline; gap: 6px; }
+    #prod-price { font-weight: 900; color: #7c3aed; font-size: 15px; }
+    #prod-orig-price { font-size: 11px; color: #9ca3af; text-decoration: line-through; }
+    #prod-discount { font-size: 10px; font-weight: 800; background: #fee2e2; color: #dc2626; padding: 1px 5px; border-radius: 50px; }
+    #prod-badge { font-size: 10px; font-weight: 700; color: #7c3aed; margin-top: 2px; }
 
-    .status { text-align: center; font-size: 12px; padding: 8px; border-radius: 8px; margin-top: 10px; display: none; }
-    .status.success { background: #d1fae5; color: #065f46; display: block; }
-    .status.error { background: #fee2e2; color: #991b1b; display: block; }
+    /* Form fields */
+    .field { margin-bottom: 8px; }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: #6b7280; margin-bottom: 4px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 8px 10px; border: 1.5px solid #e5e7eb; border-radius: 9px;
+      font-size: 12px; outline: none; transition: border-color .15s; }
+    .field input:focus, .field select:focus { border-color: #7c3aed; }
 
-    /* ── Configurações ── */
-    .settings-btn { background: none; border: none; cursor: pointer; font-size: 18px; margin-left: auto; padding: 2px 6px; }
-    .settings-panel { display: none; padding: 16px; border-top: 1px solid #f0f0f0; }
-    .settings-panel.open { display: block; }
+    /* Buttons */
+    .btn { width: 100%; padding: 11px; border: none; border-radius: 12px; font-size: 13px; font-weight: 800;
+      cursor: pointer; transition: all .15s; }
+    .btn-primary { background: linear-gradient(135deg,#7c3aed,#a855f7); color: white; }
+    .btn-primary:hover { opacity: .9; }
+    .btn-secondary { background: #f3f4f6; color: #374151; margin-top: 6px; }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
 
-    .tabs { display: flex; gap: 4px; margin-bottom: 14px; }
-    .tab { flex: 1; padding: 8px; border: 1px solid #e5e5e5; border-radius: 8px; background: white; font-size: 11px; font-weight: 600; cursor: pointer; text-align: center; }
-    .tab.active { background: #7C3AED; color: white; border-color: #7C3AED; }
+    /* Status */
+    .status-msg { display: none; padding: 8px 12px; border-radius: 9px; font-size: 12px; font-weight: 600;
+      margin-top: 8px; text-align: center; }
+    .status-msg.success { background: #d1fae5; color: #065f46; }
+    .status-msg.error { background: #fee2e2; color: #991b1b; }
+
+    /* Settings */
+    .settings-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .settings-row .field { flex: 1; margin: 0; }
+    #settings-status { font-size: 11px; color: #059669; font-weight: 700; }
+
+    /* Bulk */
+    .bulk-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .bulk-badge { background: #7c3aed; color: white; border-radius: 50px; padding: 3px 10px; font-size: 12px; font-weight: 800; }
+    #bulk-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .bulk-item { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1.5px solid #e5e7eb; border-radius: 10px; }
+    .bulk-item img { width: 38px; height: 38px; object-fit: contain; border-radius: 6px; background: #f9f9f9; flex-shrink: 0; }
+    .bulk-item-info { flex: 1; min-width: 0; }
+    .bulk-item-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bulk-item-price { font-size: 11px; color: #7c3aed; font-weight: 800; }
+    .bulk-remove { background: #fee2e2; border: none; border-radius: 6px; color: #dc2626; font-size: 14px; cursor: pointer; 
+      width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>🌸 Marusso Parfum</h1>
-      <p>Importador de produtos ML</p>
-    </div>
-    <button class="settings-btn" id="settingsBtn" title="Configurações">⚙️</button>
-  </header>
-
-  <!-- Configurações (oculto por padrão) -->
-  <div class="settings-panel" id="settingsPanel">
-    <div class="field">
-      <label>URL da API do site</label>
-      <input type="url" id="apiUrl" placeholder="https://marusso-parfum.vercel.app" />
-    </div>
-    <div class="field">
-      <label>API Secret (gerado no setup)</label>
-      <input type="password" id="apiSecret" placeholder="cole o secret aqui" />
-    </div>
-    <button class="btn btn-primary" id="saveSettings">Salvar configurações</button>
-    <div class="status" id="settingsStatus"></div>
+  <div class="header">
+    <div class="header-logo">🌸</div>
+    <div><div class="header-title">Marusso Parfum</div><div class="header-sub">Importador de Produtos ML</div></div>
   </div>
 
-  <!-- Corpo principal -->
-  <div class="body" id="mainBody">
-    <!-- Estado: sem produto capturado -->
-    <div class="empty" id="emptyState">
-      <div class="icon">🛒</div>
-      <p><strong>Abra uma página de produto</strong> no Mercado Livre e clique no botão roxo <em>"Adicionar ao Marusso"</em> que aparece na tela.</p>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-produto">Produto</button>
+    <button class="tab-btn" data-tab="tab-settings">Configurações</button>
+  </div>
+
+  <!-- TAB PRODUTO -->
+  <div class="tab-content" id="tab-produto" style="display:block;">
+
+    <!-- Estado vazio -->
+    <div id="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">Nenhum produto capturado</div>
+      <div class="empty-sub">
+        Abra um produto no Mercado Livre e clique no<br>
+        botão roxo <strong>🌸 Adicionar ao Marusso</strong><br><br>
+        Ou na página de busca, use o botão<br>
+        <strong>🌸 Importar produtos</strong> para importar em massa
+      </div>
     </div>
 
-    <!-- Estado: produto capturado -->
-    <div id="productState" style="display:none">
+    <!-- Produto único -->
+    <div id="product-panel">
       <div class="product-preview">
-        <img id="prevImg" src="" alt="" />
-        <div class="product-info">
-          <div class="brand" id="prevBrand"></div>
-          <div class="name" id="prevName"></div>
-          <div class="price" id="prevPrice"></div>
+        <img id="prod-img" style="display:none;" />
+        <div class="prod-info">
+          <div id="prod-name"></div>
+          <div class="prod-prices">
+            <span id="prod-price"></span>
+            <span id="prod-orig-price"></span>
+            <span id="prod-discount"></span>
+          </div>
+          <div id="prod-badge"></div>
         </div>
       </div>
 
-      <div class="tabs">
-        <button class="tab active" data-tab="add">Adicionar</button>
-        <button class="tab" data-tab="details">Detalhes</button>
+      <div class="field"><label>Nome</label><input id="input-name" type="text" /></div>
+      <div class="field"><label>Marca</label><input id="input-brand" type="text" /></div>
+      <div class="field"><label>Preço (R$)</label><input id="input-price" type="number" step="0.01" /></div>
+      <div class="field"><label>Link afiliado (meli.la/...)</label><input id="input-link" type="text" placeholder="https://meli.la/..." /></div>
+      <div class="field"><label>Badge</label><input id="input-badge" type="text" placeholder="MAIS VENDIDO" /></div>
+      <div class="field">
+        <label>Gênero</label>
+        <select id="input-gender">
+          <option value="feminino">Feminino</option>
+          <option value="masculino">Masculino</option>
+          <option value="unissex" selected>Unissex</option>
+        </select>
       </div>
 
-      <!-- Aba: adicionar -->
-      <div id="tabAdd">
-        <div class="field">
-          <label>Seu link de afiliado (meli.la/...)</label>
-          <input type="url" id="affiliateLink" placeholder="https://meli.la/XXXXXX" />
-        </div>
-        <div class="field">
-          <label>Categoria</label>
-          <select id="gender">
-            <option value="unissex">Unissex</option>
-            <option value="feminino">Feminino</option>
-            <option value="masculino">Masculino</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Badge (opcional)</label>
-          <input type="text" id="badge" placeholder="MAIS VENDIDO, NOVO, PREMIUM..." />
-        </div>
-        <button class="btn btn-primary" id="addBtn">➕ Adicionar ao site</button>
-        <button class="btn btn-secondary" id="clearBtn">✖ Limpar / Capturar outro</button>
-      </div>
+      <button class="btn btn-primary" id="send-btn">🌸 Adicionar à Loja</button>
+      <button class="btn btn-secondary" id="clear-btn">Descartar produto</button>
+      <div class="status-msg" id="status-msg"></div>
+    </div>
 
-      <!-- Aba: detalhes capturados -->
-      <div id="tabDetails" style="display:none">
-        <div class="field">
-          <label>Nome (editável)</label>
-          <input type="text" id="editName" />
-        </div>
-        <div class="field">
-          <label>Preço (R$)</label>
-          <input type="number" id="editPrice" step="0.01" />
-        </div>
-        <div class="field">
-          <label>Preço original (R$, opcional)</label>
-          <input type="number" id="editOriginal" step="0.01" />
-        </div>
-        <div class="field">
-          <label>Marca</label>
-          <input type="text" id="editBrand" />
-        </div>
+    <!-- Bulk import -->
+    <div id="bulk-panel">
+      <div class="bulk-header">
+        <span style="font-weight:800;">Importação em massa</span>
+        <span class="bulk-badge"><span id="bulk-count">0</span> produtos</span>
       </div>
+      <div id="bulk-list"></div>
+      <div class="field">
+        <label>Gênero para todos</label>
+        <select id="bulk-gender">
+          <option value="feminino">Feminino</option>
+          <option value="masculino">Masculino</option>
+          <option value="unissex" selected>Unissex</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="bulk-send-btn">🚀 Enviar todos para a loja</button>
+      <button class="btn btn-secondary" id="bulk-clear-btn">Cancelar</button>
+      <div class="status-msg" id="status-msg"></div>
+    </div>
+  </div>
 
-      <div class="status" id="mainStatus"></div>
+  <!-- TAB SETTINGS -->
+  <div class="tab-content" id="tab-settings">
+    <div class="field"><label>URL da loja</label><input id="api-url" type="text" placeholder="https://marusso-parfum.vercel.app" /></div>
+    <div class="field"><label>Chave secreta API</label><input id="api-secret" type="password" placeholder="Sua chave secreta..." /></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+      <button class="btn btn-primary" id="save-settings-btn" style="flex:1;">Salvar</button>
+      <span id="settings-status"></span>
+    </div>
+    <div style="margin-top:14px;padding:10px;background:#faf5ff;border-radius:10px;font-size:11px;color:#6b7280;line-height:1.6;">
+      <strong style="color:#7c3aed;">Como usar:</strong><br>
+      1. Cole o link afiliado (meli.la/...) do produto<br>
+      2. Defina gênero e badge<br>
+      3. Clique em Adicionar à Loja<br><br>
+      Para importar em massa, use o botão na página de busca do ML
     </div>
   </div>
 

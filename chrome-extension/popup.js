@@ -1,148 +1,194 @@
-// ================================================================
-// Marusso Parfum — Popup JS
-// ================================================================
+const $ = id => document.getElementById(id);
 
-const $ = (id) => document.getElementById(id);
+let currentProduct = null;
+let bulkProducts = [];
 
-// ── Configurações ─────────────────────────────────────────────
-$("settingsBtn").onclick = () => {
-  $("settingsPanel").classList.toggle("open");
-};
+chrome.storage.local.get(["marusso_product", "marusso_bulk", "marusso_settings"], (res) => {
+  const settings = res.marusso_settings || {};
+  $("api-url").value = settings.apiUrl || "https://marusso-parfum.vercel.app";
+  $("api-secret").value = settings.apiSecret || "";
 
-chrome.storage.local.get(["marusso_api_url", "marusso_secret"], (s) => {
-  if (s.marusso_api_url) $("apiUrl").value = s.marusso_api_url;
-  if (s.marusso_secret) $("apiSecret").value = s.marusso_secret;
+  if (res.marusso_bulk && res.marusso_bulk.length > 0) {
+    bulkProducts = res.marusso_bulk;
+    showBulkMode(bulkProducts);
+  } else if (res.marusso_product) {
+    currentProduct = res.marusso_product;
+    showSingleMode(currentProduct);
+  } else {
+    showEmpty();
+  }
 });
 
-$("saveSettings").onclick = () => {
-  chrome.storage.local.set({
-    marusso_api_url: $("apiUrl").value.trim().replace(/\/$/, ""),
-    marusso_secret: $("apiSecret").value.trim(),
+function showEmpty() {
+  $("empty-state").style.display = "flex";
+  $("product-panel").style.display = "none";
+  $("bulk-panel").style.display = "none";
+}
+
+function showSingleMode(p) {
+  $("empty-state").style.display = "none";
+  $("bulk-panel").style.display = "none";
+  $("product-panel").style.display = "block";
+
+  if (p.image) { $("prod-img").src = p.image; $("prod-img").style.display = "block"; }
+  $("prod-name").textContent = p.name || "Sem nome";
+  $("prod-price").textContent = `R$ ${parseFloat(p.price || 0).toFixed(2)}`;
+  if (p.original_price) $("prod-orig-price").textContent = `R$ ${parseFloat(p.original_price).toFixed(2)}`;
+  if (p.discount) $("prod-discount").textContent = `-${p.discount}%`;
+  $("prod-badge").textContent = p.badge || "";
+
+  $("input-name").value = p.name || "";
+  $("input-brand").value = p.brand || "";
+  $("input-price").value = p.price || 0;
+  $("input-link").value = $("input-link").value || "";
+  $("input-gender").value = p.gender || "unissex";
+}
+
+function showBulkMode(items) {
+  $("empty-state").style.display = "none";
+  $("product-panel").style.display = "none";
+  $("bulk-panel").style.display = "block";
+  $("bulk-count").textContent = items.length;
+
+  const list = $("bulk-list");
+  list.innerHTML = "";
+  items.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "bulk-item";
+    el.innerHTML = `
+      <img src="${p.image}" onerror="this.src=''" />
+      <div class="bulk-item-info">
+        <div class="bulk-item-name">${p.name}</div>
+        <div class="bulk-item-price">R$ ${parseFloat(p.price || 0).toFixed(2)}</div>
+      </div>
+      <button class="bulk-remove" data-idx="${i}">×</button>
+    `;
+    list.appendChild(el);
   });
-  showStatus("settingsStatus", "✅ Configurações salvas!", "success");
+
+  list.querySelectorAll(".bulk-remove").forEach(btn => {
+    btn.onclick = () => {
+      const idx = parseInt(btn.dataset.idx);
+      bulkProducts.splice(idx, 1);
+      chrome.storage.local.set({ marusso_bulk: bulkProducts });
+      if (bulkProducts.length === 0) { showEmpty(); return; }
+      showBulkMode(bulkProducts);
+    };
+  });
+}
+
+// Salvar settings
+$("save-settings-btn").onclick = () => {
+  const settings = { apiUrl: $("api-url").value.trim(), apiSecret: $("api-secret").value.trim() };
+  chrome.storage.local.set({ marusso_settings: settings }, () => {
+    $("settings-status").textContent = "✅ Salvo!";
+    setTimeout(() => $("settings-status").textContent = "", 2000);
+  });
 };
 
-// ── Tabs ──────────────────────────────────────────────────────
-document.querySelectorAll(".tab").forEach((tab) => {
-  tab.onclick = () => {
-    document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-    tab.classList.add("active");
-    $("tabAdd").style.display = tab.dataset.tab === "add" ? "block" : "none";
-    $("tabDetails").style.display = tab.dataset.tab === "details" ? "block" : "none";
+// Abas
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(t => t.style.display = "none");
+    btn.classList.add("active");
+    $(btn.dataset.tab).style.display = "block";
   };
 });
 
-// ── Carrega produto capturado ─────────────────────────────────
-let currentProduct = null;
+// Enviar produto único
+$("send-btn").onclick = async () => {
+  if (!currentProduct) return;
+  const settings = await getSettings();
+  if (!settings.apiSecret) { showStatus("❌ Configure a chave secreta nas configurações", "error"); return; }
 
-chrome.storage.local.get(["marusso_product"], (s) => {
-  if (!s.marusso_product) return;
-  currentProduct = s.marusso_product;
-  showProduct(currentProduct);
-});
+  const link = $("input-link").value.trim();
+  if (!link) { showStatus("❌ Preencha o link de afiliado", "error"); return; }
 
-function showProduct(p) {
-  $("emptyState").style.display = "none";
-  $("productState").style.display = "block";
+  $("send-btn").textContent = "⏳ Enviando...";
+  $("send-btn").disabled = true;
 
-  $("prevImg").src = p.image || "";
-  $("prevImg").onerror = () => { $("prevImg").src = ""; };
-  $("prevBrand").textContent = p.brand || "";
-  $("prevName").textContent = p.name || "";
-  $("prevPrice").textContent = p.price ? `R$ ${Number(p.price).toFixed(2)}` : "";
-
-  // Preenche campos de detalhes
-  $("editName").value = p.name || "";
-  $("editPrice").value = p.price || "";
-  $("editOriginal").value = p.original_price || "";
-  $("editBrand").value = p.brand || "";
-}
-
-// ── Botão Adicionar ──────────────────────────────────────────
-$("addBtn").onclick = async () => {
-  const affiliateLink = $("affiliateLink").value.trim();
-  if (!affiliateLink) {
-    showStatus("mainStatus", "⚠️ Cole seu link de afiliado (meli.la/...)", "error");
-    return;
-  }
-  if (!currentProduct) {
-    showStatus("mainStatus", "⚠️ Nenhum produto capturado", "error");
-    return;
-  }
-
-  const { marusso_api_url, marusso_secret } = await getStorage(["marusso_api_url", "marusso_secret"]);
-  if (!marusso_secret) {
-    showStatus("mainStatus", "⚠️ Configure o API Secret nas ⚙️ configurações", "error");
-    $("settingsPanel").classList.add("open");
-    return;
-  }
-
-  const apiUrl = marusso_api_url || "https://marusso-parfum.vercel.app";
-
-  // Aplica edições do usuário
   const payload = {
     ...currentProduct,
-    name: $("editName").value || currentProduct.name,
-    price: parseFloat($("editPrice").value) || currentProduct.price,
-    original_price: parseFloat($("editOriginal").value) || currentProduct.original_price,
-    brand: $("editBrand").value || currentProduct.brand,
-    affiliate_link: affiliateLink,
-    gender: $("gender").value,
-    badge: $("badge").value || null,
+    name: $("input-name").value.trim(),
+    brand: $("input-brand").value.trim(),
+    price: parseFloat($("input-price").value) || 0,
+    affiliate_link: link,
+    badge: $("input-badge").value.trim(),
+    gender: $("input-gender").value,
+    active: true,
   };
 
-  $("addBtn").disabled = true;
-  $("addBtn").textContent = "Enviando...";
-
   try {
-    const resp = await fetch(`${apiUrl}/api/products`, {
+    const r = await fetch(`${settings.apiUrl}/api/products`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Secret": marusso_secret,
-      },
+      headers: { "Content-Type": "application/json", "X-API-Secret": settings.apiSecret },
       body: JSON.stringify(payload),
     });
-
-    if (!resp.ok) {
-      const err = await resp.json();
-      throw new Error(err.error || `Erro ${resp.status}`);
+    const data = await r.json();
+    if (r.ok) {
+      showStatus("✅ Produto adicionado à loja!", "success");
+      chrome.storage.local.remove("marusso_product");
+      $("send-btn").textContent = "✅ Adicionado!";
+    } else {
+      showStatus("❌ " + (data.error || "Erro ao enviar"), "error");
+      $("send-btn").textContent = "Adicionar à Loja";
+      $("send-btn").disabled = false;
     }
-
-    showStatus("mainStatus", "✅ Produto adicionado ao site!", "success");
-    // Limpa storage
-    chrome.storage.local.remove(["marusso_product", "marusso_url"]);
-    setTimeout(() => {
-      currentProduct = null;
-      $("productState").style.display = "none";
-      $("emptyState").style.display = "block";
-    }, 2500);
   } catch (e) {
-    showStatus("mainStatus", `❌ ${e.message}`, "error");
-  } finally {
-    $("addBtn").disabled = false;
-    $("addBtn").textContent = "➕ Adicionar ao site";
+    showStatus("❌ " + e.message, "error");
+    $("send-btn").textContent = "Adicionar à Loja";
+    $("send-btn").disabled = false;
   }
 };
 
-// ── Botão Limpar ─────────────────────────────────────────────
-$("clearBtn").onclick = () => {
-  chrome.storage.local.remove(["marusso_product", "marusso_url"]);
-  currentProduct = null;
-  $("productState").style.display = "none";
-  $("emptyState").style.display = "block";
-  $("affiliateLink").value = "";
-  $("badge").value = "";
+// Enviar bulk
+$("bulk-send-btn").onclick = async () => {
+  if (!bulkProducts.length) return;
+  const settings = await getSettings();
+  if (!settings.apiSecret) { showStatus("❌ Configure a chave secreta", "error"); return; }
+
+  const gender = $("bulk-gender").value;
+  $("bulk-send-btn").textContent = "⏳ Enviando...";
+  $("bulk-send-btn").disabled = true;
+
+  let ok = 0, fail = 0;
+  for (const p of bulkProducts) {
+    try {
+      const r = await fetch(`${settings.apiUrl}/api/products`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-API-Secret": settings.apiSecret },
+        body: JSON.stringify({ ...p, gender, active: true }),
+      });
+      if (r.ok) ok++; else fail++;
+    } catch { fail++; }
+  }
+
+  $("bulk-send-btn").textContent = `✅ ${ok} enviados!`;
+  showStatus(`✅ ${ok} produto(s) adicionados${fail > 0 ? ` (${fail} falhas)` : ""}`, "success");
+  chrome.storage.local.remove("marusso_bulk");
+  bulkProducts = [];
 };
 
-// ── Helpers ───────────────────────────────────────────────────
-function showStatus(id, msg, type) {
-  const el = $(id);
-  el.textContent = msg;
-  el.className = `status ${type}`;
-  setTimeout(() => { el.className = "status"; }, 5000);
+// Limpar produto
+$("clear-btn").onclick = () => { chrome.storage.local.remove("marusso_product"); showEmpty(); };
+$("clear-btn-single") && ($("clear-btn-single").onclick = () => { chrome.storage.local.remove("marusso_product"); showEmpty(); });
+
+$("bulk-clear-btn") && ($("bulk-clear-btn").onclick = () => {
+  chrome.storage.local.remove("marusso_bulk");
+  bulkProducts = [];
+  showEmpty();
+});
+
+async function getSettings() {
+  return new Promise(res => chrome.storage.local.get("marusso_settings", d => res(d.marusso_settings || {})));
 }
 
-function getStorage(keys) {
-  return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
+function showStatus(msg, type) {
+  const el = $("status-msg");
+  if (!el) return;
+  el.textContent = msg;
+  el.className = "status-msg " + type;
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 4000);
 }
