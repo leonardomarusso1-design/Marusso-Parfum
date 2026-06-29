@@ -3,10 +3,7 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "cleanUrls": true,
-  "routes": [
-    {
-      "src": "^/(?!.*\\.).*$",
-      "dest": "/index.html"
-    }
+  "rewrites": [
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }

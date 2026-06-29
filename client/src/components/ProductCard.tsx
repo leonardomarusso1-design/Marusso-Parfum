@@ -1,5 +1,28 @@
-import { Product } from "@/lib/products";
 import { Star, ShoppingBag } from "lucide-react";
+
+interface Review {
+  author: string;
+  text: string;
+  rating: number;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  brand: string;
+  price: number;
+  originalPrice?: number;
+  discount?: number;
+  image: string;
+  description: string;
+  features: string[];
+  affiliateLink: string;
+  badge?: string;
+  soldCount?: string;
+  rating?: number;
+  gender?: "masculino" | "feminino" | "unissex";
+  reviews?: Review[];
+}
 
 interface ProductCardProps { product: Product; }
 
@@ -21,7 +44,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-primary/30 transition-all duration-300 hover:shadow-lg flex flex-col shadow-sm">
-      {/* Image — aspect-square container, object-contain so frasco aparece inteiro */}
+      {/* Imagem quadrada — object-contain mostra frasco inteiro */}
       <div className="relative bg-white overflow-hidden" style={{ paddingTop: "100%" }}>
         <img
           src={product.image}
@@ -45,9 +68,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <div className="absolute top-3 right-3">
-          <span className="px-2 py-0.5 bg-yellow-400 text-black text-[10px] font-black rounded-full shadow">
-            ML
-          </span>
+          <span className="px-2 py-0.5 bg-yellow-400 text-black text-[10px] font-black rounded-full shadow">ML</span>
         </div>
       </div>
 
@@ -59,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating || 4.5) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"}`} />
+              <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating ?? 4.5) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"}`} />
             ))}
             <span className="text-[11px] text-gray-500 ml-1">{product.rating}</span>
           </div>
