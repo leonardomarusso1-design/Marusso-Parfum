@@ -34,7 +34,6 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Header />
-          <PromoBanner />
           <NewsletterPopup />
           <Router />
           <FloatingChat />
