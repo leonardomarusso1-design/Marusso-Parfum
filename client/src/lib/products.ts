@@ -12,27 +12,25 @@ export interface Product {
   badge?: string;
   soldCount?: string;
   rating?: number;
+  gender?: "masculino" | "feminino" | "unissex";
 }
 
 export const products: Product[] = [
   {
     id: "sabah-100ml",
-    name: "Perfume Sedutor Árabe Sabah 100ml Original Feminino",
+    name: "Perfume Sedutor Árabe Sabah Al Ward 100ml Original Feminino",
     brand: "AL WATANIAH",
     price: 109.60,
     originalPrice: 230,
     discount: 52,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/TZuMrFIehNqbyrLI.png",
     description: "Perfume feminino original com fixação prolongada",
-    features: [
-      "Produto original",
-      "Compra 100% segura",
-      "Frete grátis"
-    ],
+    features: ["Original certificado", "Fixação 8h+", "Frete grátis"],
     affiliateLink: "https://meli.la/12WRDHD",
     badge: "MAIS VENDIDO",
     soldCount: "+100 mil vendidos",
-    rating: 4.7
+    rating: 4.7,
+    gender: "feminino",
   },
   {
     id: "bareeq-100ml",
@@ -40,15 +38,12 @@ export const products: Product[] = [
     brand: "AL WATANIAH",
     price: 189,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/BFLskGsPAiyEAxOK.png",
-    description: "Perfume árabe premium com aroma exclusivo",
-    features: [
-      "100% original",
-      "Compra 100% segura",
-      "Frete grátis"
-    ],
+    description: "Perfume árabe premium com aroma amadeirado exclusivo",
+    features: ["100% original", "Unissex", "Frete grátis"],
     affiliateLink: "https://meli.la/2DNbEE3",
     soldCount: "+10 mil vendidos",
-    rating: 4.6
+    rating: 4.6,
+    gender: "unissex",
   },
   {
     id: "salvo-intense-100ml",
@@ -57,14 +52,11 @@ export const products: Product[] = [
     price: 215,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/ODNLTEiJRGpmFOoB.png",
     description: "Perfume masculino intenso com fixação duradoura",
-    features: [
-      "Produtos originais",
-      "Compra segura",
-      "Frete rápido"
-    ],
+    features: ["Alta fixação", "Original importado", "Masculino intenso"],
     affiliateLink: "https://meli.la/2CcJ9P4",
     soldCount: "+10 mil vendidos",
-    rating: 4.7
+    rating: 4.7,
+    gender: "masculino",
   },
   {
     id: "fekhar-black-100ml",
@@ -73,15 +65,12 @@ export const products: Product[] = [
     price: 259,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/HRvSsDGErUzvYnLM.png",
     description: "Perfume árabe premium com aroma sofisticado",
-    features: [
-      "Produto original",
-      "Compra segura",
-      "Frete rápido"
-    ],
+    features: ["Produto premium", "Longa duração", "Frete rápido"],
     affiliateLink: "https://meli.la/244Nv4d",
     badge: "PREMIUM",
     soldCount: "+10 mil vendidos",
-    rating: 4.8
+    rating: 4.8,
+    gender: "masculino",
   },
   {
     id: "yara-tous-100ml",
@@ -90,14 +79,11 @@ export const products: Product[] = [
     price: 239,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/inWRWUjRNeixrnpY.png",
     description: "Perfume feminino elegante com fixação prolongada",
-    features: [
-      "100% original",
-      "Compra 100% segura",
-      "Frete grátis"
-    ],
+    features: ["Alta fixação", "100% original", "Frete grátis"],
     affiliateLink: "https://meli.la/2Cup1u2",
     soldCount: "+1 mil vendidos",
-    rating: 4.7
+    rating: 4.7,
+    gender: "feminino",
   },
   {
     id: "asad-100ml",
@@ -106,11 +92,10 @@ export const products: Product[] = [
     price: 156.90,
     image: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663801419060/elfabHWFmMYcQzxc.png",
     description: "Perfume árabe com aroma exclusivo e sofisticado",
-    features: [
-      "Produtos originais",
-      "Compra segura",
-      "Frete rápido"
-    ],
-    affiliateLink: "https://meli.la/27YG76P"
-  }
+    features: ["Muito vendido", "Alta fixação", "Unissex"],
+    affiliateLink: "https://meli.la/27YG76P",
+    soldCount: "+50 mil vendidos",
+    rating: 4.8,
+    gender: "unissex",
+  },
 ];
