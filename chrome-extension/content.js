@@ -453,7 +453,7 @@
             background:${isSel ? "#7c3aed" : "white"};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             ${isSel ? '<span style="color:white;font-size:11px;font-weight:900;">✓</span>' : ""}
           </div>
-          <img src="${data.image}" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#f9fafb;flex-shrink:0;" onerror="this.style.opacity='.2'">
+          <img src="${data.image}" class="afiml-bulk-img" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#f9fafb;flex-shrink:0;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:11px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.name}</div>
             <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
@@ -462,6 +462,11 @@
             </div>
             <div style="margin-top:3px;">${tags}</div>
           </div>`;
+
+        // Handler de erro sem inline onerror (CSP)
+        row.querySelectorAll(".afiml-bulk-img").forEach(img => {
+          img.addEventListener("error", () => { img.style.opacity = ".2"; });
+        });
 
         row.onclick = () => {
           if (selected.has(key)) selected.delete(key);

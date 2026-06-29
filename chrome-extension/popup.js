@@ -185,7 +185,11 @@ function showDuplicateWarning(existing, toastElId) {
 // ── Carregar produto único ─────────────────────────────────────────────────
 function loadProduct(p) {
   hide("s-empty"); show("s-product");
-  if (p.image) $("p-img").src = p.image;
+  const pImg = $("p-img");
+  if (p.image) {
+    pImg.src = p.image;
+    pImg.onerror = () => { pImg.style.opacity = ".2"; };
+  }
   $("p-brand").textContent = p.brand || "";
   $("p-name").textContent  = p.name  || "";
   $("p-price").textContent = p.price ? `R$ ${parseFloat(p.price).toFixed(2)}` : "";
@@ -374,7 +378,7 @@ function loadBulk(items) {
     ].filter(Boolean).join(" ");
 
     row.innerHTML = `
-      <img src="${p.image || ""}" onerror="this.style.opacity='.2'" />
+      <img src="${p.image || ""}" data-idx="${i}" class="bulk-img" />
       <div class="bulk-item-info">
         <div class="bulk-item-name">${p.name}</div>
         <div class="bulk-item-price">R$ ${parseFloat(p.price || 0).toFixed(2)} ${tags ? `<span style="font-size:10px;opacity:.7;">${tags}</span>` : ""}</div>
@@ -382,6 +386,11 @@ function loadBulk(items) {
       <button class="bulk-remove" data-i="${i}">×</button>
     `;
     list.appendChild(row);
+  });
+
+  // Handler de erro para imagens bulk (sem inline onerror — violaria CSP)
+  list.querySelectorAll(".bulk-img").forEach(img => {
+    img.addEventListener("error", () => { img.style.opacity = ".2"; });
   });
 
   list.querySelectorAll(".bulk-remove").forEach(btn => {
