@@ -83,7 +83,8 @@
   // ── Captura imagens ───────────────────────────────────────────────────────
   function captureImages() {
     const found = new Set();
-    // JSON-LD
+
+    // 1. JSON-LD schema (mais confiável)
     qAll('script[type="application/ld+json"]').forEach(s => {
       try {
         const d = JSON.parse(s.textContent);
@@ -93,33 +94,74 @@
         });
       } catch {}
     });
-    // data-zoom e galeria
-    qAll("[data-zoom], .ui-pdp-gallery__figure img, .ui-pdp-image, [class*='gallery'] img").forEach(el => {
-      for (const attr of ["data-zoom","data-src","src"]) {
+
+    // 2. Estado interno do React/Vue em __PRELOADED_STATE__ ou similar
+    try {
+      const scripts = qAll("script:not([src])");
+      for (const s of scripts) {
+        const txt = s.textContent || "";
+        // Procura arrays de pictures no JS
+        const matches = txt.matchAll(/"(?:url|secure_url)"\s*:\s*"(https?:\/\/[^"]+mlstatic[^"]+)"/g);
+        for (const m of matches) found.add(toHiRes(m[1]));
+        // Formato pictures:[{url:...}]
+        const m2 = txt.match(/"pictures"\s*:\s*(\[\s*\{[\s\S]*?\}\s*\])/);
+        if (m2) {
+          try {
+            JSON.parse(m2[1]).forEach(p => {
+              const u = p.url || p.secure_url || p.original || "";
+              if (isMLImage(u)) found.add(toHiRes(u));
+            });
+          } catch {}
+        }
+      }
+    } catch {}
+
+    // 3. Galeria do produto — seletores múltiplos (ML muda com frequência)
+    const galSelectors = [
+      ".ui-pdp-gallery__figure img",
+      ".ui-pdp-gallery img",
+      "[class*='gallery'] img",
+      "[class*='Gallery'] img",
+      ".ui-pdp-image",
+      "[data-zoom]",
+      "[data-src*='mlstatic']",
+      "figure img",
+    ];
+    qAll(galSelectors.join(",")).forEach(el => {
+      for (const attr of ["data-zoom","data-src","data-original","src"]) {
         const u = el.getAttribute(attr) || "";
         if (isMLImage(u)) { found.add(toHiRes(u)); break; }
       }
     });
-    // Varredura geral mlstatic
+
+    // 4. Varredura geral — pega qualquer img mlstatic grande
     qAll("img").forEach(img => {
-      for (const attr of ["data-zoom","data-src","src"]) {
+      for (const attr of ["data-zoom","data-src","data-original","src"]) {
         const u = img.getAttribute(attr) || "";
-        if (isMLImage(u) && !u.includes("icon") && !u.includes("logo")) {
-          const hi = toHiRes(u);
-          if (hi.includes("-O.")) { found.add(hi); break; }
+        if (isMLImage(u) && !u.includes("icon") && !u.includes("logo")
+            && !u.includes("25x25") && !u.includes("50x50")) {
+          found.add(toHiRes(u)); break;
         }
       }
     });
-    // HTML raw (preloaded state)
+
+    // 5. HTML raw — fallback final para páginas com lazy-load pesado
     try {
-      const m = document.documentElement.innerHTML.match(/"pictures"\s*:\s*(\[[\s\S]*?\])/);
-      if (m) JSON.parse(m[1]).forEach(p => {
-        const u = p.url || p.secure_url || "";
-        if (isMLImage(u)) found.add(toHiRes(u));
-      });
+      const html = document.documentElement.innerHTML;
+      const urlMatches = html.matchAll(/https?:\/\/[^"'\s]+mlstatic\.com[^"'\s]+-[A-Z]{1,2}\.(jpg|jpeg|webp|png)/gi);
+      for (const m of urlMatches) found.add(toHiRes(m[0]));
     } catch {}
 
-    const list = [...found].filter(Boolean);
+    const list = [...found]
+      .filter(u => u && u.includes("-O."))  // só hi-res
+      .slice(0, 20);                         // máximo 20 imagens
+
+    // Se não achou hi-res, tenta qualquer mlstatic
+    if (list.length === 0) {
+      const fallback = [...found].filter(Boolean).slice(0, 10);
+      return { image: fallback[0] || "", images: fallback };
+    }
+
     return { image: list[0] || "", images: list };
   }
 
@@ -158,12 +200,29 @@
       ? Math.round((1 - price / original_price) * 100) : null;
 
     // ── Descrição ──────────────────────────────────────────────────────────
-    const description = txt(".ui-pdp-description__content") ||
-                        txt(".item-description__text");
+    const description = (
+      txt(".ui-pdp-description__content") ||
+      txt(".item-description__text") ||
+      txt("[class*='description__content']") ||
+      txt("[class*='item-description']") ||
+      txt(".ui-pdp-collapsible__content") ||
+      txt("[data-testid='description-content']") ||
+      // Pega o texto do maior bloco <p> da página como fallback
+      (() => {
+        let best = "";
+        qAll("p").forEach(p => { if ((p.innerText||"").length > best.length) best = p.innerText; });
+        return best.length > 50 ? best.trim() : "";
+      })()
+    );
 
     // ── Features ───────────────────────────────────────────────────────────
-    const features = qAll(".ui-pdp-features__list li, [class*='highlight'] li")
-      .map(el => el.innerText.trim()).filter(Boolean);
+    const features = qAll([
+      ".ui-pdp-features__list li",
+      "[class*='highlight'] li",
+      "[class*='features'] li",
+      ".ui-pdp-highlights li",
+      "[class*='feature-list'] li",
+    ].join(",")).map(el => el.innerText.trim()).filter(Boolean);
 
     // ── Specs ──────────────────────────────────────────────────────────────
     const specs = {};
@@ -197,10 +256,22 @@
     const rating = parseFloat(ratingTxt) || 4.8;
 
     const sold_count = (() => {
-      for (const sel of ["[class*='sold-quantity']",".ui-pdp-header__subtitle","[class*='sold']"]) {
+      for (const sel of [
+        "[class*='sold-quantity']",
+        ".ui-pdp-header__subtitle",
+        "[class*='sold']",
+        "[class*='sales']",
+        "[data-testid='reviews-summary'] span",
+      ]) {
         const el = q(sel);
-        if (el) return el.innerText.replace(/[^0-9+km\s]/gi,"").trim();
+        if (el) {
+          const t = el.innerText || "";
+          if (/\d/.test(t)) return t.replace(/[^0-9+km\s+mil]/gi,"").trim();
+        }
       }
+      // Tenta extrair do texto geral: "1.234 vendidos"
+      const bodyMatch = bodyText().match(/([\d.,]+\s*(?:\+|mil)?\s*vendidos?)/i);
+      if (bodyMatch) return bodyMatch[1].trim();
       return "";
     })();
 
@@ -287,19 +358,63 @@
     };
   }
 
-  // ── Detecta tipo de página ────────────────────────────────────────────────
-  const isProduct = !!(q(".ui-pdp-title") || q("#ui-pdp-main-container") || q(".ui-pdp-container"));
-
+  // ── Seletores de cards de busca ───────────────────────────────────────────
   const CARD_SEL = [
     ".ui-search-layout__item",".poly-card",".ui-search-result",
     "[class*='search-layout__item']","[class*='result--core']",
     "li[class*='ui-search']",".results-item",
   ].join(",");
 
-  const isSearch = !isProduct && qAll(CARD_SEL).length >= 1;
+  // ── Detecção por URL (confiável no SPA do ML) ──────────────────────────────
+  const href = location.href;
 
-  if (isProduct) setupProductButton();
-  setupBulkSelector(isSearch);
+  // Página de produto: produto.ml.com.br OU URL com MLB-123 OU /p/MLB OU /up/MLB
+  const isProductURL = (
+    /produto\.mercadolivre\.com\.br/.test(href) ||
+    /mercadolivre\.com\.br\/[^?#]+\/MLB-?\d+/i.test(href) ||
+    /mercadolivre\.com\.br\/[^?#]+\/p\/MLB/i.test(href) ||
+    /\/up\/MLB/i.test(href) ||
+    /[?&]pdp_filters=/.test(href)
+  );
+
+  // Página de busca: lista.ml.com.br OU path com busca/search/categoria
+  const isSearchURL = (
+    /lista\.mercadolivre\.com\.br/.test(href) ||
+    /mercadolivre\.com\.br\/(busca|search|_search|[a-z-]{4,}#[DS])/i.test(href)
+  ) && !isProductURL;
+
+  // ── Espera elemento aparecer no DOM (para SPAs) ───────────────────────────
+  function waitForElement(selector, callback, timeout = 8000) {
+    if (q(selector)) { callback(); return; }
+    const start = Date.now();
+    const obs = new MutationObserver(() => {
+      if (q(selector)) { obs.disconnect(); callback(); }
+      else if (Date.now() - start > timeout) obs.disconnect();
+    });
+    obs.observe(document.body || document.documentElement, { childList: true, subtree: true });
+  }
+
+  // ── Inicialização baseada em URL ───────────────────────────────────────────
+  if (isProductURL) {
+    // Espera o título do produto aparecer no DOM (ML é SPA)
+    waitForElement(".ui-pdp-title, #ui-pdp-main-container, .ui-pdp-container", () => {
+      // Pequeno delay extra para descrição e imagens carregarem
+      setTimeout(setupProductButton, 800);
+    });
+  } else if (isSearchURL) {
+    // Busca: espera os cards aparecerem
+    waitForElement(CARD_SEL, () => {
+      setTimeout(() => setupBulkSelector(true), 500);
+    });
+  } else {
+    // Fallback: tenta detectar pelo DOM depois de 2s
+    setTimeout(() => {
+      const hasProduct = !!(q(".ui-pdp-title") || q("#ui-pdp-main-container"));
+      const hasCards   = qAll(CARD_SEL).length >= 1;
+      if (hasProduct) setupProductButton();
+      else if (hasCards) setupBulkSelector(true);
+    }, 2000);
+  }
 
   // ════════════════════════════════════════════════════════════════════════
   //  BOTÃO PRODUTO
@@ -324,24 +439,46 @@
     btn.onclick = () => {
       const icon = q("#afiml-icon"), label = q("#afiml-label");
       icon.textContent = "⏳"; label.textContent = "Capturando..."; btn.disabled = true;
-      try {
-        const data = captureProduct();
-        console.log("[AfiML] Produto:", { name: data.name, gender: data.gender, origin: data.origin,
-          price: data.price, original_price: data.original_price, free_shipping: data.free_shipping,
-          is_best_seller: data.is_best_seller, images: data.images.length });
-        chrome.storage.local.set({ afiml_product: data, afiml_mode: "single" }, () => {
-          icon.textContent = "✅";
-          label.textContent = `Capturado! ${data.images.length} foto(s) · ${data.gender} · ${data.origin}`;
-          btn.style.background = "linear-gradient(135deg,#059669,#10b981)";
-          setTimeout(() => {
-            icon.textContent = "🛒"; label.textContent = "Adicionar ao Site";
-            btn.style.background = "linear-gradient(135deg,#7c3aed,#9333ea)"; btn.disabled = false;
-          }, 4000);
-        });
-      } catch(e) {
-        console.error("[AfiML]", e);
-        icon.textContent = "❌"; label.textContent = "Erro — tente novamente"; btn.disabled = false;
-      }
+
+      // Scroll até o fim para disparar lazy-load de descrição e avaliações
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
+      // Aguarda 1.5s para o lazy-load completar antes de capturar
+      setTimeout(() => {
+        // Volta ao topo para UX
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        try {
+          const data = captureProduct();
+          console.log("[AfiML] Produto capturado:", {
+            name: data.name, price: data.price,
+            images: data.images.length, description: data.description?.length || 0,
+            features: data.features?.length || 0, reviews: data.reviews?.length || 0,
+            gender: data.gender, origin: data.origin, free_shipping: data.free_shipping,
+          });
+
+          if (!data.name) {
+            icon.textContent = "❌"; label.textContent = "Título não encontrado — aguarde carregar"; btn.disabled = false;
+            return;
+          }
+
+          chrome.storage.local.set({ afiml_product: data, afiml_mode: "single" }, () => {
+            const imgCount = data.images.length;
+            const hasDesc  = data.description?.length > 10;
+            icon.textContent = "✅";
+            label.textContent = `✓ ${imgCount} foto${imgCount!==1?"s":""} · ${data.gender}${hasDesc ? " · com descrição" : ""}`;
+            btn.style.background = "linear-gradient(135deg,#059669,#10b981)";
+            setTimeout(() => {
+              icon.textContent = "🛒"; label.textContent = "Adicionar ao Site";
+              btn.style.background = "linear-gradient(135deg,#7c3aed,#9333ea)";
+              btn.disabled = false;
+            }, 4000);
+          });
+        } catch(e) {
+          console.error("[AfiML] Erro na captura:", e);
+          icon.textContent = "❌"; label.textContent = "Erro — F12 para detalhes"; btn.disabled = false;
+        }
+      }, 1500);
     };
     document.body.appendChild(btn);
   }
