@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
   "name": "AfiML — Importador de Afiliados ML",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Importe produtos do Mercado Livre direto para o seu site de afiliado em 1 clique.",
-  "permissions": ["activeTab", "scripting", "storage", "notifications"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
+    "https://lista.mercadolivre.com.br/*",
     "https://produto.mercadolivre.com.br/*",
+    "https://mercadolivre.com.br/*",
+    "https://*.mercadolivre.com.br/*",
     "https://*/*"
   ],
   "action": {
@@ -17,7 +20,10 @@
     {
       "matches": [
         "https://www.mercadolivre.com.br/*",
-        "https://produto.mercadolivre.com.br/*"
+        "https://lista.mercadolivre.com.br/*",
+        "https://produto.mercadolivre.com.br/*",
+        "https://mercadolivre.com.br/*",
+        "https://*.mercadolivre.com.br/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
