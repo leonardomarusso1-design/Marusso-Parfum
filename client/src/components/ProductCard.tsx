@@ -3,6 +3,17 @@ import { Star, ShoppingBag, Zap } from "lucide-react";
 
 interface ProductCardProps { product: Product; }
 
+function trackClick(product: Product) {
+  if (typeof window !== "undefined" && (window as any).fbq) {
+    (window as any).fbq("track", "InitiateCheckout", {
+      content_name: product.name,
+      content_ids: [product.id],
+      value: product.price,
+      currency: "BRL",
+    });
+  }
+}
+
 export default function ProductCard({ product }: ProductCardProps) {
   const savings = product.originalPrice
     ? (product.originalPrice - product.price).toFixed(0)
@@ -41,6 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <a
             href={product.affiliateLink}
             target="_blank" rel="noopener noreferrer"
+            onClick={() => trackClick(product)}
             className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg"
           >
             <ShoppingBag className="w-4 h-4" />
@@ -97,6 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <a
           href={product.affiliateLink}
           target="_blank" rel="noopener noreferrer"
+          onClick={() => trackClick(product)}
           className="mt-auto flex items-center justify-center gap-2 w-full py-3.5 bg-primary text-primary-foreground font-black rounded-xl hover:bg-primary/90 transition-all text-sm shadow hover:shadow-md active:scale-95"
         >
           <Zap className="w-4 h-4" />
