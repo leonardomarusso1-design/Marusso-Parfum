@@ -487,11 +487,25 @@
 
     function buildItems() {
       const itemsDiv = panel.querySelector("#afiml-items");
-      const cards = qAll([
+      // Pega todos os cards e deduplica por ml_item_id ou nome+preço
+      const rawCards = qAll([
         ".ui-search-layout__item", ".poly-card", ".ui-search-result",
         "[class*='search-layout__item']", "[class*='result--core']",
         "li[class*='ui-search']", ".results-item",
-      ].join(", ")).filter(c => c.querySelector("a[href*='mercadolivre']") && captureCardData(c));
+      ].join(", ")).filter(c => c.querySelector("a[href*='mercadolivre']"));
+
+      const seenKeys = new Set();
+      const cards = rawCards.filter(c => {
+        const data = captureCardData(c);
+        if (!data) return false;
+        // Chave de deduplicação: ml_item_id > nome+preço
+        const key = data.ml_item_id || `${data.name.slice(0,30)}-${data.price}`;
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        c._afimlData = data;
+        c._afimlKey = data.ml_item_id || data.id;
+        return true;
+      });
 
       panel.querySelector("#afiml-sub").textContent = `${cards.length} produtos encontrados`;
       itemsDiv.innerHTML = "";
