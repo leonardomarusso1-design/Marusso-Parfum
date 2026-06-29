@@ -44,7 +44,7 @@ function PromoBanner() {
           </p>
         </div>
         <a
-          href="https://www.mercadolivre.com.br/social/inventolandia/lists"
+          href="https://meli.la/1L5ue6P"
           target="_blank" rel="noopener noreferrer"
           className="hidden sm:block bg-white text-red-600 px-3 py-1 rounded font-black text-xs hover:bg-gray-100 transition-colors shrink-0"
         >

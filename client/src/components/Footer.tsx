@@ -28,7 +28,7 @@ export default function Footer() {
           <div>
             <h4 className="font-black text-foreground mb-5 uppercase text-xs tracking-widest">Links Rápidos</h4>
             <ul className="space-y-3 text-sm">
-              <li><a href="#produtos" className="text-muted-foreground hover:text-primary transition-colors">Produtos</a></li>
+              <li><a href="https://meli.la/1L5ue6P" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">Produtos</a></li>
               <li><a href="#como-funciona" className="text-muted-foreground hover:text-primary transition-colors">Como Funciona</a></li>
               <li><a href="#por-que" className="text-muted-foreground hover:text-primary transition-colors">Por Que Escolher</a></li>
               <li><a href="#avaliacoes" className="text-muted-foreground hover:text-primary transition-colors">Avaliações</a></li>

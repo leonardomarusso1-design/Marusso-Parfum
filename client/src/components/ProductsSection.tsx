@@ -218,7 +218,7 @@ export default function ProductsSection() {
             ))}
           </div>
           <a
-            href="https://www.mercadolivre.com.br"
+            href="https://meli.la/1L5ue6P"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-yellow-400 text-black font-black rounded-xl hover:bg-yellow-300 transition-all shadow"

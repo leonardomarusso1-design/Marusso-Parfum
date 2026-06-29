@@ -55,7 +55,7 @@ export default function ReviewsSection() {
 
         <div className="text-center mt-10">
           <a
-            href="https://www.mercadolivre.com.br/social/inventolandia/lists"
+            href="https://meli.la/1L5ue6P"
             target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3.5 bg-yellow-400 text-black font-black rounded-xl hover:bg-yellow-300 transition-colors shadow"
           >
