@@ -17,6 +17,38 @@ async function getSettings() {
     chrome.storage.local.get("afiml_settings", d => res(d.afiml_settings || {}))
   );
 }
+// ── Draft persistente — salva campos enquanto o popup está aberto ──────────
+const DRAFT_FIELDS = ["f-link","f-name","f-price","f-orig","f-badge","f-gender"];
+
+function saveDraft() {
+  const draft = {};
+  DRAFT_FIELDS.forEach(id => { const el = $(id); if (el) draft[id] = el.value; });
+  chrome.storage.local.set({ afiml_draft: draft });
+}
+
+function clearDraft() {
+  chrome.storage.local.remove("afiml_draft");
+}
+
+function restoreDraft(draft) {
+  if (!draft) return;
+  DRAFT_FIELDS.forEach(id => {
+    const el = $(id);
+    if (el && draft[id] !== undefined && draft[id] !== "") el.value = draft[id];
+  });
+  // Destaca o campo link se já tem conteúdo salvo
+  if (draft["f-link"]) {
+    $("f-link").style.borderColor = "#7c3aed";
+    const indicator = document.createElement("div");
+    indicator.style.cssText = "font-size:10px;color:#7c3aed;font-weight:700;margin-top:2px;";
+    indicator.textContent = "✓ Link restaurado automaticamente";
+    indicator.id = "draft-indicator";
+    $("f-link").insertAdjacentElement("afterend", indicator);
+    setTimeout(() => { const el = $("draft-indicator"); if (el) el.remove(); $("f-link").style.borderColor = ""; }, 3000);
+  }
+}
+
+
 
 // ── Tabs ─────────────────────────────────────────────────────────────────
 document.querySelectorAll(".tab").forEach(btn => {
@@ -34,11 +66,20 @@ $("advanced-toggle").addEventListener("click", () => {
   $("advanced-toggle").textContent = (open ? "▶" : "▼") + " Editar nome e preço";
 });
 
+
+// ── Auto-save do rascunho ─────────────────────────────────────────────────
+// Roda após DOM estar disponível (addEventListener já está ativo)
+DRAFT_FIELDS.forEach(id => {
+  const el = $(id);
+  if (el) el.addEventListener("input", saveDraft);
+});
+
 $("paste-link").addEventListener("click", async () => {
   try {
     const text = await navigator.clipboard.readText();
     if (text.includes("meli.la") || text.includes("mercadolivre") || text.includes("mercadopago")) {
       $("f-link").value = text.trim();
+      saveDraft();
       $("f-link").style.borderColor = "#7c3aed";
       setTimeout(() => $("f-link").style.borderColor = "", 1500);
     }
@@ -46,7 +87,7 @@ $("paste-link").addEventListener("click", async () => {
 });
 
 // ── Load settings ─────────────────────────────────────────────────────────
-chrome.storage.local.get(["afiml_settings", "afiml_product", "afiml_mode", "afiml_bulk"], res => {
+chrome.storage.local.get(["afiml_settings", "afiml_product", "afiml_mode", "afiml_bulk", "afiml_draft"], res => {
   const cfg = res.afiml_settings || {};
   $("cfg-url").value    = cfg.url    || "";
   $("cfg-secret").value = cfg.secret || "";
@@ -59,6 +100,8 @@ chrome.storage.local.get(["afiml_settings", "afiml_product", "afiml_mode", "afim
     document.querySelectorAll(".tab")[1].click();
   } else if (res.afiml_product) {
     loadProduct(res.afiml_product);
+    // Restaura rascunho dos campos
+    restoreDraft(res.afiml_draft);
   }
 
   if (cfg.lastGender) {
@@ -284,6 +327,7 @@ async function doPublish(payload, cfg, btn, gender) {
     if (r.ok) {
       chrome.storage.local.set({ afiml_settings: { ...cfg, lastGender: gender } });
       chrome.storage.local.remove(["afiml_product", "afiml_mode"]);
+      clearDraft();
       btn.textContent = "✅ Publicado na loja!";
       btn.style.background = "linear-gradient(135deg,#059669,#10b981)";
       toast("toast-single", `✅ "${payload.name.slice(0,30)}..." está na loja!`, "ok");
@@ -307,6 +351,7 @@ async function doPublish(payload, cfg, btn, gender) {
 
 $("btn-discard").addEventListener("click", () => {
   chrome.storage.local.remove(["afiml_product", "afiml_mode"]);
+  clearDraft();
   hide("s-product"); show("s-empty");
 });
 
