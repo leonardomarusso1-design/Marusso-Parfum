@@ -5,7 +5,7 @@ export default function HeroSection() {
     <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/manus-storage/hero-perfumes-arabes_c5df5d10.png)' }}
+        style={{ backgroundImage: 'url('/products/Hero%20Background.png')' }}
       >
         <div className="absolute inset-0 bg-black/70" />
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent" />
