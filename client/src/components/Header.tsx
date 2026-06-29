@@ -8,7 +8,7 @@ export default function Header() {
         🛡 Parceiro Mercado Livre &nbsp;·&nbsp; 🚚 Frete Full &nbsp;·&nbsp; ⭐ +5.000 Avaliações Verificadas
       </div>
 
-      <header className="w-full bg-background/95 backdrop-blur-sm border-b border-border shadow-sm">
+      <header className="w-full bg-white border-b border-border shadow-sm">
         <div className="container flex items-center justify-between h-16">
           {/* Logo */}
           <a href="/" className="flex items-center">

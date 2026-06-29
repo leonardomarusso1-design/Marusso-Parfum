@@ -73,7 +73,7 @@ export default function ProductsSection() {
             ))}
           </div>
           <a
-            href="#produtos"
+            href="https://www.mercadolivre.com.br/social/inventolandia/lists" target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-4 bg-yellow-400 text-black font-black rounded-xl hover:bg-yellow-300 transition-all text-base shadow"
           >
             <ShoppingBag className="w-5 h-5" />

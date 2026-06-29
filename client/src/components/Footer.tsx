@@ -1,17 +1,19 @@
 import { Heart } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Footer() {
   return (
     <footer className="bg-card border-t border-border py-14">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+          {/* Logo + descrição */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-black text-sm">M</div>
-              <div>
-                <h3 className="font-black text-foreground tracking-wide">MARUSSO</h3>
-                <p className="text-[10px] text-muted-foreground tracking-widest">PARFUM</p>
-              </div>
+            <div className="mb-4">
+              <img
+                src="/products/logomarca.png"
+                alt="Marusso Parfum"
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               Curadoria de perfumes árabes originais. Parceiro afiliado do Mercado Livre — você compra direto no ML com toda segurança da plataforma.
@@ -22,22 +24,24 @@ export default function Footer() {
             </div>
           </div>
 
+          {/* Links */}
           <div>
             <h4 className="font-black text-foreground mb-5 uppercase text-xs tracking-widest">Links Rápidos</h4>
             <ul className="space-y-3 text-sm">
-              {[
-                { label: "Produtos", href: "#produtos" },
-                { label: "Como Funciona", href: "#como-funciona" },
-                { label: "Por Que Escolher", href: "#por-que" },
-                { label: "Avaliações", href: "#avaliacoes" },
-                { label: "FAQ", href: "/faq" },
-                { label: "WhatsApp", href: "https://wa.me/5519997051919" },
-              ].map((l) => (
-                <li key={l.label}><a href={l.href} className="text-muted-foreground hover:text-primary transition-colors">{l.label}</a></li>
-              ))}
+              <li><a href="#produtos" className="text-muted-foreground hover:text-primary transition-colors">Produtos</a></li>
+              <li><a href="#como-funciona" className="text-muted-foreground hover:text-primary transition-colors">Como Funciona</a></li>
+              <li><a href="#por-que" className="text-muted-foreground hover:text-primary transition-colors">Por Que Escolher</a></li>
+              <li><a href="#avaliacoes" className="text-muted-foreground hover:text-primary transition-colors">Avaliações</a></li>
+              <li>
+                <Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors">FAQ</Link>
+              </li>
+              <li>
+                <a href="https://wa.me/5519997051919" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">WhatsApp</a>
+              </li>
             </ul>
           </div>
 
+          {/* Garantias */}
           <div>
             <h4 className="font-black text-foreground mb-5 uppercase text-xs tracking-widest">Garantias</h4>
             <ul className="space-y-3 text-sm text-muted-foreground">
