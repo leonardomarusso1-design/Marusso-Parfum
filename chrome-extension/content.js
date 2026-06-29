@@ -124,33 +124,50 @@
     // Imagens
     const { image, images } = captureImages();
 
-    // Preço atual
+    // Preço — pega o preço COM desconto (preço de oferta, não original)
+    // ML estrutura: preço riscado (.original-value) + preço atual (.second-line ou .main)
     let price = 0;
-    for (const sel of [
-      ".ui-pdp-price__second-line .andes-money-amount__fraction",
-      ".andes-money-amount--cents-superscript .andes-money-amount__fraction",
-      ".andes-money-amount__fraction",
-      ".price-tag-fraction",
-    ]) {
-      const el = q(sel);
-      if (el) {
-        price = parseFloat(el.innerText.replace(/\./g, "").replace(",", "."));
-        if (price > 0) break;
+    let original_price = null;
+
+    // 1. Tenta pegar o preço promocional (o que aparece em destaque, maior)
+    const priceContainers = qAll([
+      ".ui-pdp-price__main-container",
+      ".ui-pdp-price__second-line",
+      "[data-testid='price-part']",
+      ".ui-pdp-price",
+    ].join(", "));
+
+    for (const container of priceContainers) {
+      // Pula containers que são de preço original (riscado)
+      if (container.closest(".ui-pdp-price__original-value")) continue;
+      const fraction = container.querySelector(".andes-money-amount__fraction, .price-tag-fraction");
+      if (fraction) {
+        const val = parseFloat(fraction.innerText.replace(/\./g, "").replace(",", "."));
+        if (val > 0) { price = val; break; }
       }
     }
 
-    // Preço original riscado
-    let original_price = null;
+    // 2. Se não achou via container, pega o primeiro fraction NÃO riscado
+    if (!price) {
+      const allFractions = qAll(".andes-money-amount__fraction, .price-tag-fraction");
+      for (const el of allFractions) {
+        if (el.closest(".ui-pdp-price__original-value")) continue;
+        if (el.closest("[class*='installment'], [class*='cuota']")) continue;
+        const val = parseFloat(el.innerText.replace(/\./g, "").replace(",", "."));
+        if (val > 1) { price = val; break; }
+      }
+    }
+
+    // 3. Preço original RISCADO (só preenche se for maior que price)
     for (const sel of [
       ".ui-pdp-price__original-value .andes-money-amount__fraction",
       ".ui-pdp-price__original-value .price-tag-fraction",
-      '[class*="original-price"] .andes-money-amount__fraction',
-      '[class*="price-original"] .andes-money-amount__fraction',
+      '[class*="original"] .andes-money-amount__fraction',
     ]) {
       const el = q(sel);
       if (el) {
-        original_price = parseFloat(el.innerText.replace(/\./g, "").replace(",", "."));
-        if (original_price > 0) break;
+        const val = parseFloat(el.innerText.replace(/\./g, "").replace(",", "."));
+        if (val > price) { original_price = val; break; }
       }
     }
 
@@ -179,20 +196,41 @@
       if (cells.length >= 2) specs[cells[0].innerText.trim()] = cells[1].innerText.trim();
     });
 
-    // Reviews
-    const reviews = qAll(
-      ".ui-review-capability__rating__review, .ui-pdp-review, [class*='review-item']"
-    ).slice(0, 15).map(el => ({
-      author: txt(
-        ".ui-review-capability__rating__author, .ui-pdp-review__username, [class*='review-author']", el
-      ) || "Cliente",
-      rating: parseFloat(
-        txt('[class*="fill"], [class*="average"], [class*="rating"]', el)
-      ) || 5,
-      text: txt(
-        ".ui-review-capability__content, .ui-pdp-review__text, [class*='review-content'], [class*='review-text']", el
-      ),
-    })).filter(r => r.text);
+    // Reviews — múltiplos seletores para nome + texto
+    const reviews = qAll([
+      ".ui-review-capability__rating__review",
+      ".ui-pdp-review",
+      "[class*='review-item']",
+      "[class*='review__item']",
+      ".ui-reviews-list__item",
+    ].join(", ")).slice(0, 15).map(el => {
+      // Nome do autor — tenta vários seletores
+      const author =
+        txt(".ui-review-capability__rating__author", el) ||
+        txt(".ui-pdp-review__username", el) ||
+        txt("[class*='review-author']", el) ||
+        txt("[class*='author-name']", el) ||
+        txt("[class*='reviewer-name']", el) ||
+        txt("strong", el) ||
+        txt("[class*='user-name']", el) ||
+        "Cliente";
+
+      // Rating numérico
+      const stars = el.querySelectorAll("[aria-label*='estrela'], [class*='star--on'], [class*='fill-on'], svg[class*='filled']");
+      const rating = stars.length > 0 ? stars.length : (parseFloat(txt("[class*='average']", el)) || 5);
+
+      // Texto do review
+      const text =
+        txt(".ui-review-capability__content__text", el) ||
+        txt(".ui-review-capability__content", el) ||
+        txt(".ui-pdp-review__text", el) ||
+        txt("[class*='review-content']", el) ||
+        txt("[class*='review-text']", el) ||
+        txt("[class*='comment-content']", el) ||
+        txt("p", el);
+
+      return { author: author.trim(), rating, text: text.trim() };
+    }).filter(r => r.text && r.text.length > 3);
 
     const ratingTxt = txt(
       ".ui-pdp-review__rating__summary-average, .ui-pdp-review-summary__average, [class*='summary-average']"
