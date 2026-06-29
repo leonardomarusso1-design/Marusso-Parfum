@@ -1,20 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Marusso Parfum — Importador ML",
+  "name": "AfiML — Importador de Afiliados ML",
   "version": "1.0.0",
-  "description": "Adicione perfumes da sua lista de afiliados ML direto no seu site.",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "description": "Importe produtos do Mercado Livre direto para o seu site de afiliado em 1 clique.",
+  "permissions": ["activeTab", "scripting", "storage", "notifications"],
   "host_permissions": [
     "https://www.mercadolivre.com.br/*",
     "https://produto.mercadolivre.com.br/*",
-    "https://marusso-parfum.vercel.app/*",
-    "http://localhost:5000/*"
+    "https://*/*"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_icon": {
-      "32": "icon.png"
-    }
+    "default_icon": { "32": "icon.png", "128": "icon.png" }
   },
   "content_scripts": [
     {

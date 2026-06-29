@@ -1,108 +1,86 @@
 (function () {
   "use strict";
 
-  // ──────────────────────────────────────────────
-  // UTILIDADES
-  // ──────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────────────────
   function toHiRes(url) {
-    if (!url) return url;
+    if (!url) return "";
     return url.replace(/\?.*$/, "").replace(/-[A-Z]\.(jpg|jpeg|webp|png)/i, "-O.$1");
   }
+  const q = (sel, ctx = document) => ctx.querySelector(sel);
+  const qAll = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+  const txt = (sel, ctx = document) => (q(sel, ctx)?.innerText || "").trim();
 
-  function q(selector, ctx = document) { return ctx.querySelector(selector); }
-  function qAll(selector, ctx = document) { return [...ctx.querySelectorAll(selector)]; }
-  function getText(selector, ctx = document) { return (q(selector, ctx)?.innerText || "").trim(); }
+  // ── Detecta tipo de página ───────────────────────────────────────────────
+  const isProduct = !!q(".ui-pdp-title, #ui-pdp-main-container");
+  const isSearch  = !isProduct && qAll(".ui-search-layout__item, .poly-card").length > 1;
 
-  // ──────────────────────────────────────────────
-  // PÁGINA DE PRODUTO: botão "Adicionar ao Marusso"
-  // ──────────────────────────────────────────────
-  const isProductPage = /\/p\/[A-Z0-9]+|produto\.mercadolivre/.test(location.href) ||
-    !!q(".ui-pdp-title");
+  if (isProduct) setupProductButton();
+  if (isSearch)  setupBulkSelector();
 
-  if (isProductPage) {
-    injectProductButton();
-  }
-
-  // ──────────────────────────────────────────────
-  // PÁGINA DE BUSCA / LISTA: botão bulk import
-  // ──────────────────────────────────────────────
-  const isSearchPage = /\/listagem|\/busca|\/s\?|categoria|\/c\/[A-Z]/.test(location.href) ||
-    qAll(".ui-search-layout__item, .poly-card").length > 2;
-
-  if (isSearchPage) {
-    injectBulkButton();
-  }
-
-  // ════════════════════════════════════════════════
-  // PRODUTO: captura dados
-  // ════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════════
+  //  PÁGINA DE PRODUTO — captura dados
+  // ════════════════════════════════════════════════════════════════════════
   function captureProduct() {
-    const name = getText(".ui-pdp-title") || document.title;
-    const brand = getText(".ui-pdp-header__brand-title-container a") ||
-      getText(".ui-pdp-subtitle") || "Sem marca";
+    // Nome
+    const name = txt(".ui-pdp-title") || document.title.split(" | ")[0];
 
-    // Imagem hi-res via data-zoom
-    const zoomEl = q("[data-zoom]");
-    const imgEl = q(".ui-pdp-gallery__figure img, .ui-pdp-image");
-    const imageRaw = zoomEl?.getAttribute("data-zoom") ||
-      zoomEl?.getAttribute("data-src") || imgEl?.src || "";
-    const image = toHiRes(imageRaw);
+    // Marca
+    const brand =
+      txt(".ui-pdp-header__brand-title-container a") ||
+      txt('[class*="brand"]') ||
+      name.split(" ")[0];
 
-    // Todas as imagens
-    const images = qAll("[data-zoom]")
-      .map(el => toHiRes(el.getAttribute("data-zoom") || el.getAttribute("data-src") || ""))
-      .filter(Boolean);
-    if (image && !images.includes(image)) images.unshift(image);
+    // Imagem principal (hi-res via data-zoom)
+    const zoomSrc =
+      q("[data-zoom]")?.getAttribute("data-zoom") ||
+      q("[data-src]")?.getAttribute("data-src") ||
+      q(".ui-pdp-gallery__figure img, .ui-pdp-image")?.src || "";
+    const image = toHiRes(zoomSrc);
+
+    // Galeria completa
+    const images = [...new Set(
+      qAll("[data-zoom]")
+        .map(el => toHiRes(el.getAttribute("data-zoom") || el.getAttribute("data-src") || ""))
+        .concat([image])
+        .filter(Boolean)
+    )];
 
     // Preço atual
     let price = 0;
-    const priceSelectors = [
-      ".andes-money-amount__fraction",
+    for (const sel of [
       ".ui-pdp-price__second-line .andes-money-amount__fraction",
-      "[data-testid='price-part'] .andes-money-amount__fraction",
-    ];
-    for (const sel of priceSelectors) {
+      ".andes-money-amount__fraction",
+      ".price-tag-fraction",
+    ]) {
       const el = q(sel);
       if (el) { price = parseFloat(el.innerText.replace(/\./g, "").replace(",", ".")); break; }
     }
 
     // Preço original (riscado)
     let original_price = null;
-    const origSelectors = [
+    for (const sel of [
       ".ui-pdp-price__original-value .andes-money-amount__fraction",
       ".ui-pdp-price__original-value .price-tag-fraction",
-      "[class*='original'] .andes-money-amount__fraction",
-    ];
-    for (const sel of origSelectors) {
+      '[class*="original"] .andes-money-amount__fraction',
+    ]) {
       const el = q(sel);
       if (el) { original_price = parseFloat(el.innerText.replace(/\./g, "").replace(",", ".")); break; }
     }
 
     // Desconto
     let discount = null;
-    const discEl = q(".ui-pdp-price__second-line .andes-money-amount__discount, [class*='discount']");
-    if (discEl) {
-      const m = discEl.innerText.match(/(\d+)/);
-      if (m) discount = parseInt(m[1]);
-    }
-    if (!discount && original_price && price) {
-      discount = Math.round((1 - price / original_price) * 100);
-    }
-
-    // Parcelamento
-    const installment = getText(".ui-pdp-payment--installments, .ui-pdp-payment__installments");
-
-    // Frete
-    const frete = getText(".ui-pdp-media__body .ui-pdp-color--GREEN, [class*='shipping'] [class*='free']");
+    const discEl = q('[class*="discount"], .ui-pdp-price__second-line [class*="andes-badge"]');
+    if (discEl) { const m = discEl.innerText.match(/(\d+)/); if (m) discount = parseInt(m[1]); }
+    if (!discount && original_price && price) discount = Math.round((1 - price / original_price) * 100);
 
     // Descrição
-    const description = getText(".ui-pdp-description__content, .item-description__text");
+    const description = txt(".ui-pdp-description__content, .item-description__text");
 
-    // Features (bullets)
+    // Features / highlights
     const features = qAll(".ui-pdp-features__list li, .ui-vpp-strikethrough-highlights__reason-text")
       .map(el => el.innerText.trim()).filter(Boolean);
 
-    // Specs (tabela de características)
+    // Especificações (tabela)
     const specs = {};
     qAll(".andes-table__row, .ui-pdp-specs__table tr").forEach(row => {
       const th = row.querySelector("th, td:first-child");
@@ -110,230 +88,290 @@
       if (th && td) specs[th.innerText.trim()] = td.innerText.trim();
     });
 
-    // Reviews
-    const reviews = qAll(".ui-review-capability__rating__review, .ui-pdp-review").slice(0, 10).map(el => ({
-      author: getText(".ui-review-capability__rating__author, .ui-pdp-review__username", el) || "Cliente",
-      rating: parseFloat(getText(".ui-review-capability__rating__level--fill, .ui-pdp-review__rating", el)) || 5,
-      text: getText(".ui-review-capability__content, .ui-pdp-review__text", el),
-    })).filter(r => r.text);
+    // Avaliações
+    const reviews = qAll(".ui-review-capability__rating__review, .ui-pdp-review")
+      .slice(0, 12)
+      .map(el => ({
+        author: txt(".ui-review-capability__rating__author, .ui-pdp-review__username", el) || "Cliente",
+        rating: parseFloat(txt('[class*="fill"], [class*="average"]', el)) || 5,
+        text: txt(".ui-review-capability__content, .ui-pdp-review__text, .ui-review-capability__content__text", el),
+      }))
+      .filter(r => r.text);
 
-    // Rating geral
-    const ratingText = getText(".ui-pdp-review__rating__summary-average, .ui-pdp-review-summary__average");
-    const rating = parseFloat(ratingText) || 4.5;
+    // Rating médio
+    const ratingTxt = txt(".ui-pdp-review__rating__summary-average, .ui-pdp-review-summary__average");
+    const rating = parseFloat(ratingTxt) || 4.8;
 
     // Vendidos
-    const sold_count = getText(".ui-pdp-seller-validated__header span, .ui-pdp-header__subtitle")?.replace(/[^0-9+kmKM\s]/g, "").trim() || "";
+    const sold_count = (() => {
+      const el = q("[class*='sold'], .ui-pdp-header__subtitle");
+      return (el?.innerText || "").replace(/[^0-9+km\s]/gi, "").trim();
+    })();
 
-    // ML item ID
-    const ml_item_id = location.href.match(/MLB[-]?(\d+)/i)?.[0] || "";
+    // Badge
+    const badge =
+      txt(".ui-pdp-promotions-pill-label__text, .ui-pdp-winner-label, [class*='best-seller']") ||
+      (sold_count ? "MAIS VENDIDO" : "");
+
+    // ID único
+    const ml_item_id = location.href.match(/MLB-?(\d+)/i)?.[0] || "";
+    const id = ml_item_id
+      ? ml_item_id.toLowerCase().replace("-", "")
+      : name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 35) + "-" + Date.now();
 
     // Categoria (breadcrumb)
-    const breadcrumbs = qAll(".andes-breadcrumb__item");
-    const category = breadcrumbs[breadcrumbs.length - 2]?.innerText?.trim() || "";
-
-    // Badge (mais vendido, etc.)
-    const badge = getText(".ui-pdp-promotions-pill-label__text, .ui-pdp-winner-label, [class*='best-seller']") || "";
+    const crumbs = qAll(".andes-breadcrumb__item");
+    const category = crumbs[crumbs.length - 2]?.innerText?.trim() || "Perfumes";
 
     return {
-      id: (name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now()),
-      name, brand, price, original_price, discount,
-      image, images, description, features, specs,
-      installment, frete, reviews, rating, sold_count,
-      ml_item_id, category, badge,
-      source_url: location.href,
-      active: true,
+      id, name, brand, price, original_price, discount, image, images,
+      description, features, specs, reviews, rating, sold_count, badge,
+      ml_item_id, category, source_url: location.href, active: true,
     };
   }
 
-  function injectProductButton() {
-    if (document.getElementById("marusso-btn")) return;
+  // ── Injeta botão na página de produto ────────────────────────────────────
+  function setupProductButton() {
+    if (document.getElementById("afiml-btn")) return;
 
     const btn = document.createElement("button");
-    btn.id = "marusso-btn";
-    btn.innerHTML = "🌸 Adicionar ao Marusso";
+    btn.id = "afiml-btn";
+    btn.innerHTML = `
+      <span id="afiml-btn-icon">🛒</span>
+      <span id="afiml-btn-label">Adicionar ao Site</span>
+    `;
     Object.assign(btn.style, {
-      position: "fixed", bottom: "24px", right: "24px", zIndex: "99999",
-      background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-      color: "#fff", border: "none", borderRadius: "50px",
+      position: "fixed", bottom: "28px", right: "28px", zIndex: "999999",
+      background: "linear-gradient(135deg, #7c3aed 0%, #9333ea 100%)",
+      color: "#fff", border: "none", borderRadius: "56px",
       padding: "14px 22px", fontSize: "14px", fontWeight: "800",
-      cursor: "pointer", boxShadow: "0 8px 25px rgba(124,58,237,.45)",
-      transition: "transform .15s,box-shadow .15s", fontFamily: "sans-serif",
+      cursor: "pointer", display: "flex", alignItems: "center", gap: "8px",
+      boxShadow: "0 8px 32px rgba(124,58,237,.5), 0 2px 8px rgba(0,0,0,.2)",
+      transition: "transform .2s, box-shadow .2s", fontFamily: "system-ui, sans-serif",
+      letterSpacing: "-.3px",
     });
-    btn.onmouseenter = () => { btn.style.transform = "scale(1.05)"; btn.style.boxShadow = "0 12px 30px rgba(124,58,237,.6)"; };
-    btn.onmouseleave = () => { btn.style.transform = "scale(1)"; btn.style.boxShadow = "0 8px 25px rgba(124,58,237,.45)"; };
+
+    btn.onmouseenter = () => {
+      btn.style.transform = "translateY(-2px) scale(1.02)";
+      btn.style.boxShadow = "0 14px 40px rgba(124,58,237,.6), 0 4px 12px rgba(0,0,0,.2)";
+    };
+    btn.onmouseleave = () => {
+      btn.style.transform = "none";
+      btn.style.boxShadow = "0 8px 32px rgba(124,58,237,.5), 0 2px 8px rgba(0,0,0,.2)";
+    };
 
     btn.onclick = () => {
-      btn.innerHTML = "⏳ Capturando...";
+      const icon = document.getElementById("afiml-btn-icon");
+      const label = document.getElementById("afiml-btn-label");
+      icon.textContent = "⏳";
+      label.textContent = "Capturando...";
       btn.disabled = true;
+
       try {
         const data = captureProduct();
-        chrome.storage.local.set({ marusso_product: data }, () => {
-          btn.innerHTML = "✅ Produto capturado!";
-          setTimeout(() => { btn.innerHTML = "🌸 Adicionar ao Marusso"; btn.disabled = false; }, 2500);
+        chrome.storage.local.set({ afiml_product: data, afiml_mode: "single" }, () => {
+          icon.textContent = "✅";
+          label.textContent = "Produto capturado!";
+          btn.style.background = "linear-gradient(135deg, #059669, #10b981)";
+
+          // Abre popup automaticamente
+          setTimeout(() => {
+            icon.textContent = "🛒";
+            label.textContent = "Adicionar ao Site";
+            btn.style.background = "linear-gradient(135deg, #7c3aed, #9333ea)";
+            btn.disabled = false;
+          }, 3000);
         });
       } catch (e) {
-        btn.innerHTML = "❌ Erro — tente novamente";
+        icon.textContent = "❌";
+        label.textContent = "Erro — tente novamente";
         btn.disabled = false;
-        console.error("[Marusso]", e);
+        setTimeout(() => { icon.textContent = "🛒"; label.textContent = "Adicionar ao Site"; }, 2500);
       }
     };
 
     document.body.appendChild(btn);
   }
 
-  // ════════════════════════════════════════════════
-  // BUSCA: BULK IMPORT
-  // ════════════════════════════════════════════════
-  function captureSearchItem(card) {
+  // ════════════════════════════════════════════════════════════════════════
+  //  PÁGINA DE BUSCA — seleção em massa
+  // ════════════════════════════════════════════════════════════════════════
+  function captureCardData(card) {
     const link = card.querySelector("a[href*='mercadolivre']");
-    const imgEl = card.querySelector("img");
-    const nameEl = card.querySelector(".poly-component__title, .ui-search-item__title, h2");
-    const priceEl = card.querySelector(".poly-price__current .andes-money-amount__fraction, .price-tag-fraction, .andes-money-amount__fraction");
-    const origEl = card.querySelector(".poly-price__original .andes-money-amount__fraction, [class*='original'] .andes-money-amount__fraction");
-    const badgeEl = card.querySelector(".poly-component__seller-highlight, [class*='best-seller'], [class*='pill']");
+    const img = card.querySelector("img");
+    const nameEl = card.querySelector(".poly-component__title, .ui-search-item__title, h2, [class*='title']");
+    const priceEl = card.querySelector(".poly-price__current .andes-money-amount__fraction, .price-tag-fraction");
+    const origEl = card.querySelector('.poly-price__original .andes-money-amount__fraction');
+    const badgeEl = card.querySelector(".poly-component__seller-highlight, [class*='pill']");
 
     const name = (nameEl?.innerText || nameEl?.textContent || "").trim();
-    if (!name) return null;
+    if (!name || !link) return null;
 
     const price = parseFloat((priceEl?.innerText || "0").replace(/\./g, "").replace(",", ".")) || 0;
     const original_price = origEl ? parseFloat(origEl.innerText.replace(/\./g, "").replace(",", ".")) : null;
     const discount = (original_price && price) ? Math.round((1 - price / original_price) * 100) : null;
-
-    const image = toHiRes(imgEl?.getAttribute("data-src") || imgEl?.src || "");
+    const image = toHiRes(img?.getAttribute("data-src") || img?.src || "");
     const badge = (badgeEl?.innerText || "").trim();
-    const sourceUrl = link?.href || "";
-    const ml_item_id = sourceUrl.match(/MLB[-]?(\d+)/i)?.[0] || "";
-    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now() + Math.random().toString(36).slice(2, 5);
+    const sourceUrl = link.href;
+    const ml_item_id = sourceUrl.match(/MLB-?(\d+)/i)?.[0] || "";
+    const id = (ml_item_id || name.replace(/[^a-z0-9]+/gi, "-").slice(0, 30)).toLowerCase() + "-" + Math.random().toString(36).slice(2, 6);
 
     return { id, name, brand: "", price, original_price, discount, image, images: image ? [image] : [],
-      badge, ml_item_id, source_url: sourceUrl, affiliate_link: sourceUrl, active: true };
+      badge, ml_item_id, source_url: sourceUrl, affiliate_link: "", active: true };
   }
 
-  function injectBulkButton() {
-    if (document.getElementById("marusso-bulk-btn")) return;
+  function setupBulkSelector() {
+    if (document.getElementById("afiml-bulk-wrap")) return;
 
-    // Wrapper flutuante
+    // Estado
+    const selected = new Map(); // id → data
+    let panelOpen = false;
+
+    // Container flutuante
     const wrap = document.createElement("div");
-    wrap.id = "marusso-bulk-wrap";
+    wrap.id = "afiml-bulk-wrap";
     Object.assign(wrap.style, {
-      position: "fixed", bottom: "24px", right: "24px", zIndex: "99999",
-      display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px",
-      fontFamily: "sans-serif",
+      position: "fixed", bottom: "28px", right: "28px", zIndex: "999999",
+      display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "10px",
+      fontFamily: "system-ui, sans-serif",
     });
 
-    // Contador
-    const counter = document.createElement("div");
-    counter.id = "marusso-counter";
-    counter.style.cssText = "background:#7c3aed;color:white;padding:6px 14px;border-radius:50px;font-size:12px;font-weight:700;display:none;";
+    // Painel lateral
+    const panel = document.createElement("div");
+    Object.assign(panel.style, {
+      width: "320px", maxHeight: "65vh", background: "white",
+      borderRadius: "20px", boxShadow: "0 20px 60px rgba(0,0,0,.18), 0 0 0 1px rgba(124,58,237,.15)",
+      overflow: "hidden", display: "none", flexDirection: "column",
+    });
+
+    // Header do painel
+    panel.innerHTML = `
+      <div style="background:linear-gradient(135deg,#7c3aed,#9333ea);padding:16px 18px;color:white;">
+        <div style="font-size:16px;font-weight:900;letter-spacing:-.4px;">🛒 Importar Produtos</div>
+        <div id="afiml-panel-sub" style="font-size:12px;opacity:.8;margin-top:2px;">Selecione os produtos para importar</div>
+      </div>
+      <div style="display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid #f3f4f6;">
+        <button id="afiml-sel-all" style="flex:1;padding:7px;background:#f5f3ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">Selecionar todos</button>
+        <button id="afiml-desel-all" style="flex:1;padding:7px;background:#f9fafb;color:#6b7280;border:1.5px solid #e5e7eb;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;">Limpar</button>
+      </div>
+      <div id="afiml-items" style="overflow-y:auto;flex:1;padding:8px;display:flex;flex-direction:column;gap:5px;"></div>
+      <div style="padding:10px 12px;border-top:1px solid #f3f4f6;">
+        <button id="afiml-import-btn" style="width:100%;padding:13px;background:linear-gradient(135deg,#7c3aed,#9333ea);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;opacity:.5;transition:opacity .2s;">
+          Importar selecionados (0)
+        </button>
+      </div>
+    `;
 
     // Botão principal
     const btn = document.createElement("button");
-    btn.innerHTML = "🌸 Importar produtos";
+    btn.id = "afiml-bulk-btn";
+    btn.innerHTML = `<span>🛒</span><span id="afiml-bulk-label">Importar Produtos</span>`;
     Object.assign(btn.style, {
-      background: "linear-gradient(135deg,#7c3aed,#a855f7)",
-      color: "#fff", border: "none", borderRadius: "50px",
+      background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+      color: "#fff", border: "none", borderRadius: "56px",
       padding: "14px 22px", fontSize: "14px", fontWeight: "800",
-      cursor: "pointer", boxShadow: "0 8px 25px rgba(124,58,237,.45)",
+      cursor: "pointer", display: "flex", alignItems: "center", gap: "8px",
+      boxShadow: "0 8px 32px rgba(124,58,237,.5)",
+      transition: "transform .2s", letterSpacing: "-.3px",
     });
-
-    // Painél de seleção
-    const panel = document.createElement("div");
-    panel.style.cssText = `background:white;border:2px solid #7c3aed;border-radius:16px;padding:14px;
-      max-height:50vh;overflow-y:auto;width:340px;box-shadow:0 12px 40px rgba(0,0,0,.15);display:none;`;
-
-    const selectedIds = new Set();
+    btn.onmouseenter = () => btn.style.transform = "translateY(-2px)";
+    btn.onmouseleave = () => btn.style.transform = "none";
 
     btn.onclick = () => {
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-      if (panel.style.display === "block") buildPanel();
+      panelOpen = !panelOpen;
+      panel.style.display = panelOpen ? "flex" : "none";
+      if (panelOpen) buildItems();
     };
 
-    function buildPanel() {
+    function buildItems() {
+      const itemsDiv = panel.querySelector("#afiml-items");
       const cards = qAll(".ui-search-layout__item, .poly-card, [class*='result-item']")
-        .filter(c => c.querySelector("a") && c.querySelector("img"));
+        .filter(c => c.querySelector("a") && c.querySelector("img") && captureCardData(c));
 
-      panel.innerHTML = `
-        <div style="font-weight:800;color:#7c3aed;margin-bottom:10px;font-size:13px;">
-          🌸 ${cards.length} produtos encontrados
-        </div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <button id="m-sel-all" style="flex:1;padding:6px;background:#f3f4f6;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Selecionar todos</button>
-          <button id="m-desel-all" style="flex:1;padding:6px;background:#f3f4f6;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">Limpar</button>
-        </div>
-        <div id="m-items" style="display:flex;flex-direction:column;gap:6px;"></div>
-        <button id="m-import-btn" style="width:100%;margin-top:12px;padding:12px;background:#7c3aed;color:white;border:none;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;">
-          Enviar selecionados (0)
-        </button>
-      `;
+      panel.querySelector("#afiml-panel-sub").textContent = `${cards.length} produtos encontrados`;
+      itemsDiv.innerHTML = "";
 
-      const itemsDiv = panel.querySelector("#m-items");
-      const importBtn = panel.querySelector("#m-import-btn");
-
-      cards.forEach((card, i) => {
-        const data = captureSearchItem(card);
+      cards.forEach(card => {
+        const data = captureCardData(card);
         if (!data) return;
 
-        const itemEl = document.createElement("div");
-        itemEl.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;";
-        itemEl.innerHTML = `
-          <input type="checkbox" id="m-cb-${i}" style="width:16px;height:16px;accent-color:#7c3aed;flex-shrink:0;">
-          <img src="${data.image}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#f9f9f9;" onerror="this.style.display='none'">
+        const isSelected = selected.has(data.ml_item_id || data.id);
+
+        const row = document.createElement("div");
+        Object.assign(row.style, {
+          display: "flex", alignItems: "center", gap: "10px", padding: "8px 10px",
+          border: `1.5px solid ${isSelected ? "#ddd6fe" : "#f3f4f6"}`,
+          borderRadius: "12px", cursor: "pointer",
+          background: isSelected ? "#faf5ff" : "white",
+          transition: "all .15s",
+        });
+
+        row.innerHTML = `
+          <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${isSelected ? "#7c3aed" : "#d1d5db"};
+            background:${isSelected ? "#7c3aed" : "white"};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;">
+            ${isSelected ? '<span style="color:white;font-size:11px;font-weight:900;">✓</span>' : ''}
+          </div>
+          <img src="${data.image}" style="width:42px;height:42px;object-fit:contain;border-radius:8px;background:#f9fafb;flex-shrink:0;"
+            onerror="this.style.opacity='.3'">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:11px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.name}</div>
-            <div style="font-size:11px;color:#7c3aed;font-weight:700;">R$ ${data.price.toFixed(2)}</div>
+            <div style="font-size:11px;font-weight:700;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.4;">${data.name}</div>
+            <div style="font-size:12px;color:#7c3aed;font-weight:800;margin-top:1px;">R$ ${data.price.toFixed(2)}</div>
           </div>
         `;
-        const cb = itemEl.querySelector("input");
-        itemEl.onclick = (e) => {
-          if (e.target !== cb) cb.checked = !cb.checked;
-          if (cb.checked) selectedIds.add(data.id + "|" + JSON.stringify(data));
-          else { for (const k of selectedIds) { if (k.startsWith(data.id)) { selectedIds.delete(k); break; } } }
+
+        const key = data.ml_item_id || data.id;
+        row.onclick = () => {
+          if (selected.has(key)) selected.delete(key);
+          else selected.set(key, data);
+          buildItems(); // re-render
           updateImportBtn();
-          updateCounter();
         };
-        itemsDiv.appendChild(itemEl);
-        card._marussoData = data;
-        card._marussoCheckbox = cb;
-        card._marussoId = data.id;
+
+        itemsDiv.appendChild(row);
+        card._afimlKey = key;
+        card._afimlData = data;
       });
 
-      panel.querySelector("#m-sel-all").onclick = () => {
-        selectedIds.clear();
-        cards.forEach(c => { if (c._marussoData) { c._marussoCheckbox.checked = true; selectedIds.add(c._marussoId + "|" + JSON.stringify(c._marussoData)); } });
-        updateImportBtn(); updateCounter();
+      // Sel all / desel all
+      panel.querySelector("#afiml-sel-all").onclick = (e) => {
+        e.stopPropagation();
+        cards.forEach(c => { if (c._afimlData) selected.set(c._afimlKey, c._afimlData); });
+        buildItems(); updateImportBtn();
       };
-      panel.querySelector("#m-desel-all").onclick = () => {
-        selectedIds.clear();
-        cards.forEach(c => { if (c._marussoCheckbox) c._marussoCheckbox.checked = false; });
-        updateImportBtn(); updateCounter();
-      };
-
-      function updateImportBtn() {
-        const n = selectedIds.size;
-        importBtn.textContent = `Enviar selecionados (${n})`;
-        importBtn.style.opacity = n > 0 ? "1" : "0.5";
-      }
-
-      importBtn.onclick = async () => {
-        if (selectedIds.size === 0) return;
-        const items = [...selectedIds].map(k => JSON.parse(k.split("|").slice(1).join("|")));
-        chrome.storage.local.set({ marusso_bulk: items }, () => {
-          importBtn.textContent = `✅ ${items.length} produto(s) prontos para enviar!`;
-          importBtn.style.background = "#059669";
-          setTimeout(() => { importBtn.textContent = `Enviar selecionados (${selectedIds.size})`; importBtn.style.background = "#7c3aed"; }, 3000);
-        });
+      panel.querySelector("#afiml-desel-all").onclick = (e) => {
+        e.stopPropagation();
+        selected.clear();
+        buildItems(); updateImportBtn();
       };
 
       updateImportBtn();
     }
 
-    function updateCounter() {
-      const n = selectedIds.size;
-      counter.textContent = n > 0 ? `${n} selecionado${n !== 1 ? "s" : ""}` : "";
-      counter.style.display = n > 0 ? "block" : "none";
+    function updateImportBtn() {
+      const btn = panel.querySelector("#afiml-import-btn");
+      const n = selected.size;
+      btn.textContent = n > 0 ? `Importar ${n} produto${n > 1 ? "s" : ""} →` : "Selecione produtos acima";
+      btn.style.opacity = n > 0 ? "1" : "0.5";
+      btn.style.cursor = n > 0 ? "pointer" : "default";
+      document.getElementById("afiml-bulk-label").textContent =
+        n > 0 ? `${n} selecionado${n > 1 ? "s" : ""}` : "Importar Produtos";
     }
 
-    wrap.appendChild(counter);
+    panel.addEventListener("click", e => {
+      if (e.target.id === "afiml-import-btn" && selected.size > 0) {
+        const items = [...selected.values()];
+        chrome.storage.local.set({ afiml_bulk: items, afiml_mode: "bulk" }, () => {
+          const importBtn = panel.querySelector("#afiml-import-btn");
+          importBtn.textContent = `✅ ${items.length} prontos! Abra a extensão →`;
+          importBtn.style.background = "linear-gradient(135deg,#059669,#10b981)";
+          setTimeout(() => {
+            importBtn.style.background = "linear-gradient(135deg,#7c3aed,#9333ea)";
+            updateImportBtn();
+          }, 4000);
+        });
+      }
+    });
+
     wrap.appendChild(panel);
     wrap.appendChild(btn);
     document.body.appendChild(wrap);
