@@ -5,28 +5,33 @@ import { ShoppingBag, SlidersHorizontal, ChevronDown } from "lucide-react";
 import type { Product } from "./ProductCard";
 
 const CATEGORIES = [
-  { key: "todos", label: "Todos" },
-  { key: "feminino", label: "Femininos" },
-  { key: "masculino", label: "Masculinos" },
-  { key: "unissex", label: "Unissex" },
-  { key: "ate200", label: "Até R$200" },
+  { key: "todos",      label: "Todos" },
+  { key: "feminino",   label: "Femininos" },
+  { key: "masculino",  label: "Masculinos" },
+  { key: "unissex",    label: "Unissex" },
+  { key: "frete",      label: "✈️ Frete grátis" },
+  { key: "brasil",     label: "🇧🇷 Brasil" },
+  { key: "inter",      label: "🌎 Internacional" },
+  { key: "novidade",   label: "✨ Novidades" },
+  { key: "top",        label: "🔥 Mais Vendidos" },
+  { key: "ate200",     label: "Até R$200" },
 ];
 
 const SORT_OPTIONS = [
-  { key: "default", label: "Destaque" },
-  { key: "price_asc", label: "Menor preço" },
+  { key: "default",    label: "Destaque" },
+  { key: "price_asc",  label: "Menor preço" },
   { key: "price_desc", label: "Maior preço" },
-  { key: "discount", label: "Maior desconto" },
+  { key: "discount",   label: "Maior desconto" },
 ];
 
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 export default function ProductsSection() {
   const [activeCategory, setActiveCategory] = useState("todos");
-  const [sortBy, setSortBy] = useState("default");
+  const [sortBy, setSortBy]   = useState("default");
   const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]  = useState(true);
+  const [error, setError]      = useState<string | null>(null);
   const [showSort, setShowSort] = useState(false);
 
   useEffect(() => {
@@ -41,7 +46,7 @@ export default function ProductsSection() {
     .map((p) => ({
       id: p.id, name: p.name, brand: p.brand,
       price: parseFloat(p.price ?? 0),
-      originalPrice: p.original_price ? parseFloat(p.original_price) : undefined,
+      originalPrice:  p.original_price ? parseFloat(p.original_price) : undefined,
       original_price: p.original_price ? parseFloat(p.original_price) : undefined,
       discount: p.discount, image: p.image,
       images: Array.isArray(p.images) ? p.images.filter(Boolean) : [],
@@ -50,22 +55,42 @@ export default function ProductsSection() {
       badge: p.badge, soldCount: p.sold_count, sold_count: p.sold_count,
       rating: p.rating, gender: p.gender,
       reviews: Array.isArray(p.reviews) ? p.reviews : [],
+      // Novos campos
+      in_stock:       p.in_stock,
+      free_shipping:  p.free_shipping,
+      is_best_seller: p.is_best_seller,
+      is_new:         p.is_new,
+      origin:         p.origin,
+      stock_status:   p.stock_status,
+      frete:          p.frete,
     }));
 
   const filtered = adapted.filter((p) => {
-    if (activeCategory === "feminino") return p.gender === "feminino";
+    if (activeCategory === "feminino")  return p.gender === "feminino";
     if (activeCategory === "masculino") return p.gender === "masculino";
-    if (activeCategory === "unissex") return p.gender === "unissex";
-    if (activeCategory === "ate200") return p.price <= 200;
+    if (activeCategory === "unissex")   return p.gender === "unissex";
+    if (activeCategory === "frete")     return p.free_shipping === true || p.frete;
+    if (activeCategory === "brasil")    return p.origin !== "internacional";
+    if (activeCategory === "inter")     return p.origin === "internacional";
+    if (activeCategory === "novidade")  return p.is_new === true;
+    if (activeCategory === "top")       return p.is_best_seller === true;
+    if (activeCategory === "ate200")    return p.price <= 200;
     return true;
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "price_asc") return a.price - b.price;
+    if (sortBy === "price_asc")  return a.price - b.price;
     if (sortBy === "price_desc") return b.price - a.price;
-    if (sortBy === "discount") return (b.discount ?? 0) - (a.discount ?? 0);
+    if (sortBy === "discount")   return (b.discount ?? 0) - (a.discount ?? 0);
     return 0;
   });
+
+  // Contagens para mostrar no filtro
+  const counts: Record<string, number> = {
+    frete:    adapted.filter(p => p.free_shipping || !!p.frete).length,
+    novidade: adapted.filter(p => p.is_new).length,
+    top:      adapted.filter(p => p.is_best_seller).length,
+  };
 
   return (
     <section id="produtos" className="py-16 bg-gray-50">
@@ -84,26 +109,34 @@ export default function ProductsSection() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
-          {/* Filtros por categoria */}
+        <div className="flex items-start justify-between mb-6 gap-4 flex-wrap">
+          {/* Filtros */}
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key)}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-                  activeCategory === cat.key
-                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-primary/40"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            {CATEGORIES.map((cat) => {
+              const count = counts[cat.key];
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => setActiveCategory(cat.key)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center gap-1 ${
+                    activeCategory === cat.key
+                      ? "bg-primary text-white shadow-md shadow-primary/20"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-primary/40"
+                  }`}
+                >
+                  {cat.label}
+                  {count !== undefined && count > 0 && (
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                      activeCategory === cat.key ? "bg-white/20" : "bg-gray-100 text-gray-500"
+                    }`}>{count}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Ordenação */}
-          <div className="relative">
+          <div className="relative flex-shrink-0">
             <button
               onClick={() => setShowSort(!showSort)}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-semibold text-gray-600 hover:border-primary/40"
@@ -130,7 +163,10 @@ export default function ProductsSection() {
 
         {/* Contagem */}
         {!loading && !error && (
-          <p className="text-sm text-gray-400 mb-5">{sorted.length} produto{sorted.length !== 1 ? "s" : ""} encontrado{sorted.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-gray-400 mb-5">
+            {sorted.length} produto{sorted.length !== 1 ? "s" : ""} encontrado{sorted.length !== 1 ? "s" : ""}
+            {activeCategory !== "todos" && ` em "${CATEGORIES.find(c => c.key === activeCategory)?.label}"`}
+          </p>
         )}
 
         {/* Grid */}
