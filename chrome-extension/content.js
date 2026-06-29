@@ -24,11 +24,34 @@
   const txt  = (s, ctx = document) => (q(s, ctx)?.innerText || "").trim();
 
   // ── Detecta tipo de página ────────────────────────────────────────────────
-  const isProduct = !!q(".ui-pdp-title, #ui-pdp-main-container, .ui-pdp-container");
-  const isSearch  = !isProduct && qAll(".ui-search-layout__item, .poly-card").length > 1;
+  // Produto: tem título de produto no DOM
+  const isProduct = !!(
+    q(".ui-pdp-title") ||
+    q("#ui-pdp-main-container") ||
+    q(".ui-pdp-container") ||
+    q("[class*='ui-pdp-title']")
+  );
+
+  // Busca/lista: qualquer página ML com grid de produtos (seletores ampliados)
+  const CARD_SELECTORS = [
+    ".ui-search-layout__item",
+    ".poly-card",
+    ".ui-search-result",
+    ".results-item",
+    "[class*='search-layout__item']",
+    "[class*='result--core']",
+    "li[class*='ui-search']",
+    ".andes-card",
+  ].join(", ");
+
+  const cardCount = qAll(CARD_SELECTORS).length;
+  // Mostra bulk em qualquer página ML que NÃO seja produto e tenha ao menos 1 card
+  const isSearch = !isProduct && cardCount >= 1;
 
   if (isProduct) setupProductButton();
-  if (isSearch)  setupBulkSelector();
+
+  // Bulk roda sempre em páginas não-produto — aparece oculto e só mostra se achar cards
+  setupBulkSelector(isSearch, cardCount);
 
   // ════════════════════════════════════════════════════════════════════════
   //  CAPTURA DE IMAGENS — múltiplos métodos em cascata
@@ -383,11 +406,32 @@
     };
   }
 
-  function setupBulkSelector() {
+  function setupBulkSelector(isSearch = false, cardCount = 0) {
     if (document.getElementById("afiml-bulk-wrap")) return;
+
+    const CARD_SELECTORS = [
+      ".ui-search-layout__item", ".poly-card", ".ui-search-result",
+      ".results-item", "[class*='search-layout__item']", "[class*='result--core']",
+      "li[class*='ui-search']", ".andes-card",
+    ].join(", ");
 
     const selected = new Map();
     let panelOpen = false;
+
+    // Debug: loga o que encontrou
+    console.log("[AfiML] Página de busca detectada:", isSearch, "| Cards:", cardCount, "| URL:", location.href);
+
+    // Se não detectou cards ainda, aguarda 2s (lazy-loading do ML)
+    if (!isSearch) {
+      setTimeout(() => {
+        const retryCount = qAll(CARD_SELECTORS).length;
+        console.log("[AfiML] Retry após 2s — cards:", retryCount);
+        if (retryCount >= 1 && !document.getElementById("afiml-bulk-wrap")) {
+          setupBulkSelector(true, retryCount);
+        }
+      }, 2000);
+      return;
+    }
 
     const wrap = document.createElement("div");
     wrap.id = "afiml-bulk-wrap";
@@ -443,8 +487,11 @@
 
     function buildItems() {
       const itemsDiv = panel.querySelector("#afiml-items");
-      const cards = qAll(".ui-search-layout__item, .poly-card, [class*='result-item']")
-        .filter(c => c.querySelector("a") && captureCardData(c));
+      const cards = qAll([
+        ".ui-search-layout__item", ".poly-card", ".ui-search-result",
+        "[class*='search-layout__item']", "[class*='result--core']",
+        "li[class*='ui-search']", ".results-item",
+      ].join(", ")).filter(c => c.querySelector("a[href*='mercadolivre']") && captureCardData(c));
 
       panel.querySelector("#afiml-sub").textContent = `${cards.length} produtos encontrados`;
       itemsDiv.innerHTML = "";
