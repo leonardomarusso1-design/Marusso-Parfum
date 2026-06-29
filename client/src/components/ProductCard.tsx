@@ -1,5 +1,5 @@
 import { Product } from "@/lib/products";
-import { Star, ShoppingBag, Zap } from "lucide-react";
+import { Star, ShoppingBag } from "lucide-react";
 
 interface ProductCardProps { product: Product; }
 
@@ -20,102 +20,75 @@ export default function ProductCard({ product }: ProductCardProps) {
     : null;
 
   return (
-    <div className="group relative bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 gold-glow flex flex-col shadow-sm">
-      {/* Image */}
-      <div className="relative h-56 sm:h-64 bg-muted overflow-hidden">
+    <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-primary/30 transition-all duration-300 hover:shadow-lg flex flex-col shadow-sm">
+      {/* Image — aspect-square container, object-contain so frasco aparece inteiro */}
+      <div className="relative bg-white overflow-hidden" style={{ paddingTop: "100%" }}>
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="absolute inset-0 w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/products/sabah-al-ward.png";
+          }}
         />
-
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           {product.discount && (
-            <span className="px-2 py-0.5 bg-red-600 text-white text-[11px] font-black rounded-full shadow">
-              -{product.discount}% OFF
+            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full shadow">
+              -{product.discount}%
             </span>
           )}
           {product.badge && (
-            <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[11px] font-bold rounded-full shadow">
+            <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-full shadow">
               {product.badge}
             </span>
           )}
         </div>
-
         <div className="absolute top-3 right-3">
           <span className="px-2 py-0.5 bg-yellow-400 text-black text-[10px] font-black rounded-full shadow">
-            🛒 ML
+            ML
           </span>
-        </div>
-
-        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <a
-            href={product.affiliateLink}
-            target="_blank" rel="noopener noreferrer"
-            onClick={() => trackClick(product)}
-            className="flex items-center gap-2 px-5 py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            Comprar Agora
-          </a>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1">
+      <div className="p-4 flex flex-col flex-1 border-t border-gray-50">
         <p className="text-[10px] text-primary uppercase tracking-widest font-bold mb-1">{product.brand}</p>
-        <h3 className="text-sm font-semibold text-foreground mb-3 line-clamp-2 leading-snug">{product.name}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug">{product.name}</h3>
 
-        {/* Rating + sold */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`w-3.5 h-3.5 ${i < Math.floor(product.rating || 4.5) ? "text-primary fill-primary" : "text-gray-200 fill-gray-200"}`} />
+              <Star key={i} className={`w-3 h-3 ${i < Math.floor(product.rating || 4.5) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"}`} />
             ))}
-            <span className="text-xs text-muted-foreground ml-1">{product.rating || "4.7"}</span>
+            <span className="text-[11px] text-gray-500 ml-1">{product.rating}</span>
           </div>
           {product.soldCount && (
-            <span className="text-[10px] text-green-700 font-semibold bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
-              {product.soldCount}
-            </span>
+            <span className="text-[10px] text-green-700 font-semibold">✓ {product.soldCount}</span>
           )}
         </div>
 
-        {/* Price */}
         <div className="mb-4">
           {product.originalPrice && (
-            <p className="text-xs text-muted-foreground line-through mb-0.5">
-              De R$ {product.originalPrice.toFixed(2)}
-            </p>
+            <p className="text-xs text-gray-400 line-through">R$ {product.originalPrice.toFixed(2)}</p>
           )}
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-foreground">R$ {product.price.toFixed(2)}</span>
-            {savings && (
-              <span className="text-xs text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded">-R${savings}</span>
-            )}
+            <span className="text-xl font-black text-gray-900">R$ {product.price.toFixed(2)}</span>
+            {savings && <span className="text-xs text-green-600 font-bold">−R${savings}</span>}
           </div>
         </div>
 
-        {/* Features */}
-        <div className="flex flex-wrap gap-1.5 mb-4">
-          {product.features.slice(0, 3).map((f, i) => (
-            <span key={i} className="text-[10px] px-2 py-0.5 rounded-full border border-primary/25 text-primary bg-primary/5">
-              ✓ {f}
-            </span>
-          ))}
-        </div>
-
-        {/* CTA */}
         <a
           href={product.affiliateLink}
-          target="_blank" rel="noopener noreferrer"
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={() => trackClick(product)}
-          className="mt-auto flex items-center justify-center gap-2 w-full py-3.5 bg-primary text-primary-foreground font-black rounded-xl hover:bg-primary/90 transition-all text-sm shadow hover:shadow-md active:scale-95"
+          className="mt-auto flex items-center justify-center gap-2 w-full py-3 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 active:scale-95 transition-all text-sm shadow-sm"
         >
-          <Zap className="w-4 h-4" />
-          Comprar no Mercado Livre
+          <ShoppingBag className="w-4 h-4" />
+          Comprar no ML
         </a>
-        <p className="text-center text-[10px] text-muted-foreground mt-2">🛡 Compra protegida pelo Mercado Livre</p>
+        <p className="text-center text-[10px] text-gray-400 mt-2">🛡 Compra protegida pelo Mercado Livre</p>
       </div>
     </div>
   );
