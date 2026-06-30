@@ -1,66 +1,57 @@
 import { Star } from "lucide-react";
 
-const reviews = [
-  { id: "1", author: "Mariana S.", rating: 5, text: "Ele é perfeito, muito maravilhoso o cheiro, super recomendo. É o original, podem comprar sem medo!", date: "Há 1 ano", helpful: 578, product: "Lattafa Asad" },
-  { id: "2", author: "Carlos R.", rating: 5, text: "Produto original, chegou rápido e bem embalado. Fixação incrível — durou o dia todo. Já comprei 3 vezes.", date: "Há 6 meses", helpful: 342, product: "Salvo Intense" },
-  { id: "3", author: "Fernanda L.", rating: 5, text: "Cheiro maravilhoso! Recebi vários elogios. A embalagem chegou perfeita e antes do prazo. 100% recomendo.", date: "Há 3 meses", helpful: 215, product: "Sabah Al Ward" },
-  { id: "4", author: "Rafael M.", rating: 5, text: "Não acreditei no preço quando vi — pensei que fosse falsificado. Mas chegou o original mesmo. Sensacional.", date: "Há 2 meses", helpful: 189, product: "Fakhar Black" },
+const REVIEWS = [
+  { author: "Ana Beatriz S.",  rating: 5, date: "há 2 semanas",  product: "Oud Al Misk",   text: "Perfume incrível! A fixação dura mais de 12 horas e o cheiro é exatamente como descrito. Entrega rápida via Mercado Livre. Recomendo demais!" },
+  { author: "Carlos M.",       rating: 5, date: "há 1 mês",     product: "Rose Oud",       text: "Surpreendente! Já comprei vários perfumes importados e esse é um dos melhores. Embalagem impecável e produto 100% original. Voltarei a comprar!" },
+  { author: "Fernanda L.",     rating: 5, date: "há 3 semanas",  product: "Amber Wood",    text: "Recebi vários elogios no trabalho. A projeção é incrível e o preço estava muito bom comparado a outras lojas. Super indico!" },
+  { author: "Ricardo T.",      rating: 4, date: "há 2 meses",   product: "Black Oud",      text: "Muito bom produto! A entrega demorou um pouco mais que o esperado, mas o perfume é excelente. Fixação e projeção nota 10." },
+  { author: "Juliana P.",      rating: 5, date: "há 1 semana",  product: "Santal Royal",   text: "Minha compra favorita do ano! O cheiro é divino, durou o dia inteiro. Já indiquei para todas as minhas amigas!" },
+  { author: "Marcos R.",       rating: 5, date: "há 3 semanas",  product: "Khaliji Night",  text: "Produto chegou bem embalado e o cheiro é exatamente o que eu queria. Vale cada centavo. Comprei o segundo frasco!" },
 ];
+
+function Stars({ n }: { n: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star key={i} className="w-3 h-3"
+          style={{ fill: i < n ? "#F59E0B" : "#E5E7EB", color: i < n ? "#F59E0B" : "#E5E7EB" }} />
+      ))}
+    </div>
+  );
+}
 
 export default function ReviewsSection() {
   return (
-    <section id="avaliacoes" className="py-20 bg-card border-t border-border">
+    <section id="avaliacoes" className="py-14 bg-white border-t" style={{ borderColor: "var(--border)" }}>
       <div className="container">
-        <div className="text-center mb-14">
-          <span className="text-primary text-xs uppercase tracking-widest font-bold">Avaliações Reais</span>
-          <h2 className="text-4xl md:text-5xl font-black mt-2 mb-4 text-foreground">O Que Nossos Clientes Dizem</h2>
-          <p className="text-muted-foreground text-lg max-w-xl mx-auto">Avaliações verificadas de compradores reais do Mercado Livre.</p>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-12">
-          <div className="text-center p-8 rounded-2xl border border-border bg-background shadow-sm">
-            <div className="text-6xl font-black text-primary mb-2">4.8</div>
-            <div className="flex items-center justify-center gap-1 mb-2">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 text-primary fill-primary" />)}
-            </div>
-            <p className="text-xs text-muted-foreground">5.382 avaliações verificadas</p>
-          </div>
-
-          <div className="p-8 rounded-2xl border border-yellow-300 bg-yellow-50 text-center max-w-xs shadow-sm">
-            <div className="text-3xl mb-3">🛒</div>
-            <p className="font-black text-foreground mb-1">Mercado Livre</p>
-            <p className="text-xs text-muted-foreground mb-3">Avaliações de compradores reais verificados pela plataforma</p>
-            <span className="px-3 py-1 bg-yellow-400 text-black text-xs font-black rounded-full">Vendedor Verificado ✓</span>
+        <div className="text-center mb-10">
+          <p className="text-xs uppercase tracking-widest font-bold mb-2" style={{ color: "var(--primary)" }}>
+            Depoimentos
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900" style={{ fontFamily: "'Playfair Display', serif" }}>
+            O que nossos clientes dizem
+          </h2>
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <Stars n={5} />
+            <span className="text-sm text-gray-500">4.9 de média · 500+ avaliações</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {reviews.map((r) => (
-            <div key={r.id} className="p-6 bg-background rounded-2xl border border-border hover:border-primary/30 transition-colors shadow-sm">
-              <div className="flex items-start justify-between mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {REVIEWS.map((r, i) => (
+            <div key={i} className="p-5 rounded-lg border" style={{ borderColor: "var(--border)", background: "#FAFAF8" }}>
+              <Stars n={r.rating} />
+              <p className="text-sm text-gray-700 mt-3 mb-4 leading-relaxed">"{r.text}"</p>
+              <div className="flex items-center justify-between pt-3 border-t" style={{ borderColor: "var(--border)" }}>
                 <div>
-                  <p className="font-bold text-foreground text-sm">{r.author}</p>
-                  <p className="text-[10px] text-muted-foreground">{r.date}</p>
+                  <p className="text-xs font-bold text-gray-900">{r.author}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{r.product} · {r.date}</p>
                 </div>
-                <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-semibold">{r.product}</span>
+                <span className="text-[9px] font-bold px-2 py-0.5 rounded"
+                  style={{ background: "#ECFDF5", color: "#065F46" }}>Verificado</span>
               </div>
-              <div className="flex items-center gap-1 mb-3">
-                {[...Array(5)].map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < r.rating ? "text-primary fill-primary" : "text-muted-foreground/20"}`} />)}
-              </div>
-              <p className="text-sm text-foreground leading-relaxed mb-4">"{r.text}"</p>
-              <p className="text-xs text-muted-foreground">👍 {r.helpful} pessoas acharam útil</p>
             </div>
           ))}
-        </div>
-
-        <div className="text-center mt-10">
-          <a
-            href="https://meli.la/1L5ue6P"
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3.5 bg-yellow-400 text-black font-black rounded-xl hover:bg-yellow-300 transition-colors shadow"
-          >
-            🛒 Ver Mais Avaliações no Mercado Livre
-          </a>
         </div>
       </div>
     </section>

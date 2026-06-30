@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Star, ShoppingBag, ChevronRight } from "lucide-react";
+import { Star } from "lucide-react";
 
 export interface Product {
   id: string;
@@ -32,53 +32,17 @@ export interface Product {
   perfume_type?: string;
 }
 
-// ── Detecta família olfativa pelo nome/descrição ───────────────────────────
+// Auto-detect olfactory family for the optional badge
 export function detectOlfactory(name = "", desc = ""): string {
   const t = (name + " " + desc).toLowerCase();
-  if (/\boud\b|aoud|agar|sandalwood|cedro|madeira|\bwood\b|woody|boisé/.test(t)) return "amadeirado";
-  if (/rose|jasmin|floral|blossom|flower|peony|iris|ylang|fleur|neroli|peônia/.test(t)) return "floral";
-  if (/vanill|baunilha|caramel|gourmand|doce|sweet|musk|musc|praline|amande/.test(t)) return "doce";
-  if (/aqua|fresco|fresh|citrus|bergamot|limão|green|marine|ocean|blue|cologne|marine/.test(t)) return "fresco";
-  if (/amber|ambre|oriental|intense|spice|especiaria|pepper|incense|incenso|oud/.test(t)) return "oriental";
+  if (/\boud\b|aoud|agar|sandalwood|cedro|madeira|\bwood\b|woody/.test(t)) return "amadeirado";
+  if (/rose|jasmin|floral|blossom|flower|peony|iris|ylang|fleur/.test(t)) return "floral";
+  if (/vanill|baunilha|caramel|gourmand|doce|sweet|musk|musc|praline/.test(t)) return "doce";
+  if (/aqua|fresh|fresco|citrus|bergamot|limão|green|marine|ocean|blue/.test(t)) return "fresco";
+  if (/amber|ambre|oriental|intense|spice|pepper|incenso/.test(t)) return "oriental";
   return "";
 }
 
-const OLFACTORY_CONFIG: Record<string, { emoji: string; label: string; color: string }> = {
-  amadeirado: { emoji: "🌳", label: "Amadeirado", color: "bg-amber-50 text-amber-700" },
-  floral:     { emoji: "🌸", label: "Floral",     color: "bg-pink-50 text-pink-600" },
-  doce:       { emoji: "🍬", label: "Doce",       color: "bg-purple-50 text-purple-600" },
-  fresco:     { emoji: "💧", label: "Fresco",     color: "bg-sky-50 text-sky-600" },
-  oriental:   { emoji: "🌙", label: "Oriental",   color: "bg-orange-50 text-orange-600" },
-};
-
-// ── Gera frase sensorial curta ─────────────────────────────────────────────
-function getSensoryLine(product: Product): string {
-  const olf = detectOlfactory(product.name, product.description);
-  const gender = product.gender;
-  const isFull = product.frete === "FULL";
-  const isFreeShip = product.free_shipping;
-
-  const lines: Record<string, string> = {
-    amadeirado: gender === "feminino" ? "Sofisticada, marcante e envolvente" :
-                gender === "masculino" ? "Intenso, maduro e sofisticado" : "Profundo e envolvente",
-    floral:     gender === "feminino" ? "Delicado, romântico e inesquecível" :
-                gender === "masculino" ? "Floral com toque masculino único" : "Leve, elegante e floral",
-    doce:       gender === "feminino" ? "Irresistível, doce e marcante" :
-                gender === "masculino" ? "Doce com toque amadeirado" : "Envolvente e viciante",
-    fresco:     gender === "feminino" ? "Leve, clean e sofisticado" :
-                gender === "masculino" ? "Refrescante do dia a dia" : "Fresco e versátil",
-    oriental:   gender === "feminino" ? "Misterioso, sensual e marcante" :
-                gender === "masculino" ? "Poderoso, intenso e sedutor" : "Exótico e inesquecível",
-  };
-
-  if (olf && lines[olf]) return lines[olf];
-  if (isFull || isFreeShip) return "Entrega rápida com frete grátis";
-  if (product.is_best_seller) return "O mais pedido da nossa coleção";
-  if (product.discount && product.discount >= 30) return `${product.discount}% OFF — oportunidade única`;
-  return "Fragrância árabe original selecionada";
-}
-
-// ── Pixel tracking ──────────────────────────────────────────────────────────
 function trackClick(product: Product) {
   if (typeof window !== "undefined" && (window as any).fbq) {
     (window as any).fbq("track", "InitiateCheckout", {
@@ -90,213 +54,155 @@ function trackClick(product: Product) {
   }
 }
 
-// ── Componente ──────────────────────────────────────────────────────────────
 export default function ProductCard({ product, featured = false }: { product: Product; featured?: boolean }) {
-  const allImages = [...new Set(
-    [product.image, ...(product.images ?? [])].filter(Boolean)
-  )];
-
+  const allImages = [...new Set([product.image, ...(product.images ?? [])].filter(Boolean))];
   const [imgIdx, setImgIdx] = useState(0);
   const currentSrc = allImages[imgIdx] || "/products/sabah-al-ward.png";
 
   const affiliateLink = product.affiliateLink || product.affiliate_link || "#";
   const soldCount     = product.soldCount || product.sold_count;
   const originalPrice = product.originalPrice ?? product.original_price;
-  const savings       = originalPrice && originalPrice > product.price
-    ? (originalPrice - product.price).toFixed(0) : null;
+  const isOutStock    = product.in_stock === false;
+  const isFull        = product.frete === "FULL";
+  const isFreeShip    = product.free_shipping || isFull;
+  const isLastUnit    = product.stock_status === "ultima_unidade";
 
-  const isFull     = product.frete === "FULL";
-  const isFreeShip = product.free_shipping || isFull;
-  const isIntl     = product.origin === "internacional";
-  const isOutStock = product.in_stock === false;
-  const isLastUnit = product.stock_status === "ultima_unidade";
-  const isFewLeft  = product.stock_status === "poucas_unidades";
-  const olf        = detectOlfactory(product.name, product.description);
-  const olfConf    = olf ? OLFACTORY_CONFIG[olf] : null;
-  const sensoryLine = getSensoryLine(product);
+  // Only show discount badge if meaningful
+  const showDiscount  = (product.discount ?? 0) >= 5;
 
-  const urgencyText = isLastUnit ? "⚠️ Última unidade!" :
-                      isFewLeft  ? "⚠️ Poucas unidades!" :
-                      product.is_best_seller ? "🔥 Mais pedido" :
-                      isFull ? "⚡ Entrega hoje" : null;
+  // Label for the top badge (one only, priority order)
+  const topBadge = isLastUnit        ? { label: "Última unidade", style: { background: "#FEF2F2", color: "#DC2626" } } :
+                   product.is_best_seller ? { label: "Mais Vendido",   style: { background: "#FEF3C7", color: "#92400E" } } :
+                   product.is_new     ? { label: "Novidade",       style: { background: "#EFF6FF", color: "#1D4ED8" } } :
+                   showDiscount       ? { label: `-${product.discount}%`,  style: { background: "#FEF2F2", color: "#DC2626" } } :
+                   null;
 
   return (
-    <div className={`group relative bg-white overflow-hidden flex flex-col transition-all duration-300
-      ${featured
-        ? "rounded-3xl border-2 border-primary/20 shadow-xl hover:shadow-2xl hover:-translate-y-1"
-        : "rounded-2xl border border-gray-100 hover:border-primary/20 hover:shadow-lg hover:-translate-y-0.5"
-      }`}
+    <article
+      className="group bg-white flex flex-col"
+      style={{
+        border: "1px solid var(--border)",
+        borderRadius: "4px",
+        overflow: "hidden",
+        transition: "box-shadow .25s, transform .25s",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 30px rgba(0,0,0,.10)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "none"; (e.currentTarget as HTMLElement).style.transform = "none"; }}
     >
-      {/* ── Imagem (clicável → página do produto) ─────────────────────── */}
-      <Link href={`/produto/${product.id}`}>
-        <div
-          className="relative bg-gradient-to-b from-gray-50 to-gray-100 overflow-hidden cursor-pointer"
-          style={{ paddingTop: featured ? "85%" : "100%" }}
+      {/* ── Image ── */}
+      <Link href={`/produto/${product.id}`} className="block relative overflow-hidden product-img-wrap"
+        style={{ paddingTop: featured ? "90%" : "100%", background: "#F9F7F5" }}>
+        <img
+          src={currentSrc}
+          alt={product.name}
+          className="absolute inset-0 w-full h-full object-contain p-3"
+          loading="lazy"
           onMouseEnter={() => allImages.length > 1 && setImgIdx(1)}
           onMouseLeave={() => setImgIdx(0)}
-        >
-          <img
-            src={currentSrc}
-            alt={product.name}
-            className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
-            onError={(e) => {
-              const t = e.target as HTMLImageElement;
-              if (imgIdx < allImages.length - 1) setImgIdx(i => i + 1);
-              else t.src = "/products/sabah-al-ward.png";
-            }}
-          />
+          onError={(e) => {
+            const t = e.target as HTMLImageElement;
+            if (imgIdx < allImages.length - 1) setImgIdx(i => i + 1);
+            else t.src = "/products/sabah-al-ward.png";
+          }}
+        />
 
-          {/* Dots múltiplas fotos */}
-          {allImages.length > 1 && (
-            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 pointer-events-none">
-              {allImages.slice(0, 5).map((_, i) => (
-                <div key={i} className={`rounded-full transition-all duration-300 ${
-                  i === imgIdx ? "w-3 h-1.5 bg-primary" : "w-1.5 h-1.5 bg-gray-300"
-                }`} />
-              ))}
-            </div>
-          )}
+        {/* Top-left badge */}
+        {topBadge && (
+          <span
+            className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded"
+            style={topBadge.style}
+          >
+            {topBadge.label}
+          </span>
+        )}
 
-          {/* Badge topo esquerdo */}
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-            {(product.discount ?? 0) >= 5 && (
-              <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full shadow-md">
-                -{product.discount}%
-              </span>
-            )}
-            {product.is_best_seller && (
-              <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-black rounded-full shadow-md">
-                🔥 Mais Vendido
-              </span>
-            )}
-            {product.is_new && !product.is_best_seller && (
-              <span className="px-2 py-0.5 bg-violet-500 text-white text-[10px] font-black rounded-full shadow-md">
-                ✨ Novidade
-              </span>
-            )}
+        {/* Frete grátis / FULL */}
+        {isFreeShip && (
+          <span className="absolute bottom-2 left-2 text-[9px] font-bold px-2 py-0.5 rounded"
+            style={{ background: "#ECFDF5", color: "#065F46" }}>
+            {isFull ? "Frete Full" : "Frete grátis"}
+          </span>
+        )}
+
+        {/* Multiple images dots */}
+        {allImages.length > 1 && (
+          <div className="absolute bottom-2 right-0 left-0 flex justify-center gap-1 pointer-events-none">
+            {allImages.slice(0, 4).map((_, i) => (
+              <div key={i} className="rounded-full"
+                style={{ width: i === imgIdx ? "12px" : "5px", height: "5px",
+                  background: i === imgIdx ? "var(--primary)" : "rgba(0,0,0,.25)",
+                  transition: "all .3s" }} />
+            ))}
           </div>
-
-          {/* Badge topo direito */}
-          <div className="absolute top-2.5 right-2.5 flex flex-col gap-1 items-end">
-            <span className="px-1.5 py-0.5 bg-yellow-400 text-black text-[9px] font-black rounded-full shadow">ML</span>
-            {isIntl
-              ? <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold rounded-full shadow">🌎 Importado</span>
-              : <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold rounded-full shadow">🇧🇷 Nacional</span>
-            }
-          </div>
-        </div>
+        )}
       </Link>
 
-      {/* ── Info ──────────────────────────────────────────────────────── */}
-      <div className="p-3 flex flex-col flex-1">
+      {/* ── Info ── */}
+      <div className="flex flex-col flex-1 p-3">
+        {/* Brand */}
+        <p className="text-[10px] uppercase tracking-widest font-bold mb-1" style={{ color: "var(--primary-light)" }}>
+          {product.brand || "Perfume"}
+        </p>
 
-        {/* Marca */}
-        <p className="text-[9px] text-primary uppercase tracking-widest font-black mb-0.5">{product.brand}</p>
-
-        {/* Nome — clicável */}
+        {/* Name */}
         <Link href={`/produto/${product.id}`}>
-          <h3 className={`font-bold text-gray-900 mb-1 line-clamp-2 leading-snug cursor-pointer hover:text-primary transition-colors ${featured ? "text-sm" : "text-xs"}`}>
+          <h3 className="text-xs sm:text-sm font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug cursor-pointer hover:underline"
+            style={{ fontFamily: "'Lato', sans-serif" }}>
             {product.name}
           </h3>
         </Link>
 
-        {/* Linha sensorial */}
-        <p className="text-[10px] text-gray-500 italic mb-2 line-clamp-1">{sensoryLine}</p>
+        {/* Gender tag */}
+        {product.gender && product.gender !== "unissex" && (
+          <span className="inline-block self-start text-[9px] font-bold px-1.5 py-0.5 rounded mb-2"
+            style={product.gender === "feminino"
+              ? { background: "#FDF2F8", color: "#9D174D" }
+              : { background: "#EFF6FF", color: "#1E40AF" }}>
+            {product.gender === "feminino" ? "Feminino" : "Masculino"}
+          </span>
+        )}
 
-        {/* Badges atributos */}
-        <div className="flex flex-wrap gap-1 mb-2">
-          {product.gender && product.gender !== "unissex" && (
-            <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md ${
-              product.gender === "feminino" ? "bg-pink-50 text-pink-600" : "bg-blue-50 text-blue-600"
-            }`}>
-              {product.gender === "feminino" ? "♀ Feminino" : "♂ Masculino"}
-            </span>
-          )}
-          {olfConf && (
-            <span className={`px-1.5 py-0.5 text-[9px] font-bold rounded-md ${olfConf.color}`}>
-              {olfConf.emoji} {olfConf.label}
-            </span>
-          )}
-          {isFull && (
-            <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold rounded-md">⚡ FULL</span>
-          )}
-          {!isFull && isFreeShip && (
-            <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold rounded-md">✈️ Frete grátis</span>
-          )}
-        </div>
-
-        {/* Rating + vendas */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-0.5">
+        {/* Rating */}
+        <div className="flex items-center gap-1 mb-2">
+          <div className="flex gap-0.5">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className={`w-2.5 h-2.5 ${
-                i < Math.floor(product.rating ?? 4.5) ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"
-              }`} />
+              <Star key={i} className="w-2.5 h-2.5"
+                style={{ fill: i < Math.floor(product.rating ?? 4.5) ? "#F59E0B" : "#E5E7EB",
+                         color: i < Math.floor(product.rating ?? 4.5) ? "#F59E0B" : "#E5E7EB" }} />
             ))}
-            {product.rating && <span className="text-[10px] text-gray-400 ml-1">{product.rating}</span>}
           </div>
-          {soldCount && <span className="text-[9px] text-green-600 font-semibold">✓ {soldCount}</span>}
+          {soldCount && (
+            <span className="text-[9px] text-gray-400 font-medium">{soldCount}</span>
+          )}
         </div>
 
-        {/* Preço */}
-        <div className="mb-2.5">
+        {/* Price */}
+        <div className="mt-auto">
           {originalPrice && originalPrice > product.price && (
             <p className="text-[10px] text-gray-400 line-through leading-none mb-0.5">
               R$ {Number(originalPrice).toFixed(2)}
             </p>
           )}
-          <div className="flex items-baseline gap-1.5 flex-wrap">
-            <span className={`font-black text-gray-900 ${featured ? "text-xl" : "text-base"}`}>
-              R$ {Number(product.price).toFixed(2)}
-            </span>
-            {savings && (
-              <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded-md">
-                −R${savings}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Urgência */}
-        {urgencyText && (
-          <p className="text-[9px] font-black text-orange-600 mb-2">{urgencyText}</p>
-        )}
-
-        {/* Estoque */}
-        {isOutStock && (
-          <p className="text-[9px] font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded-lg text-center mb-2">
-            Produto esgotado
+          <p className="text-base sm:text-lg font-black text-gray-900 leading-none mb-3">
+            R$ {Number(product.price).toFixed(2)}
           </p>
-        )}
 
-        {/* CTA principal — Ver no ML */}
-        <a
-          href={isOutStock ? undefined : affiliateLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => !isOutStock && trackClick(product)}
-          className={`mt-auto w-full flex items-center justify-center gap-1.5 py-2.5 font-black rounded-xl transition-all text-xs shadow-sm ${
-            isOutStock
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none"
-              : "bg-primary text-white hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-95"
-          }`}
-        >
-          <ShoppingBag className="w-3.5 h-3.5 shrink-0" />
-          {isOutStock ? "Esgotado" : "Ver no Mercado Livre"}
-          {!isOutStock && <ChevronRight className="w-3 h-3 shrink-0" />}
-        </a>
-
-        {/* Link secundário — Detalhes */}
-        {!isOutStock && (
-          <Link
-            href={`/produto/${product.id}`}
-            className="mt-1.5 w-full flex items-center justify-center gap-1 py-1.5 text-[10px] text-gray-400 hover:text-primary font-semibold transition-colors"
+          {/* CTA */}
+          <a
+            href={isOutStock ? undefined : affiliateLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => !isOutStock && trackClick(product)}
+            className="block w-full text-center py-2.5 text-xs font-bold rounded transition-all"
+            style={isOutStock
+              ? { background: "#F3F4F6", color: "#9CA3AF", cursor: "not-allowed" }
+              : { background: "var(--primary)", color: "#fff", cursor: "pointer" }
+            }
           >
-            Ver detalhes e avaliações
-          </Link>
-        )}
+            {isOutStock ? "Esgotado" : "Ver no Mercado Livre"}
+          </a>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

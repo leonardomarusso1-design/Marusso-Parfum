@@ -1,171 +1,155 @@
-import { useEffect, useState } from "react";
-import { ShoppingBag, MessageCircle, Clock, X, Menu } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ShoppingBag, Menu, X, ChevronDown, Search } from "lucide-react";
 import { Link } from "wouter";
 
-function PromoBanner() {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    const calc = () => {
-      let end = localStorage.getItem("promotionEnd");
-      if (!end) {
-        const d = new Date(); d.setHours(d.getHours() + 24);
-        end = d.toISOString(); localStorage.setItem("promotionEnd", end);
-      }
-      const diff = new Date(end).getTime() - Date.now();
-      if (diff > 0) {
-        setTimeLeft({
-          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((diff / 1000 / 60) % 60),
-          seconds: Math.floor((diff / 1000) % 60),
-        });
-      } else { localStorage.removeItem("promotionEnd"); }
-    };
-    calc();
-    const t = setInterval(calc, 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  if (!isVisible) return null;
-
-  return (
-    <div className="bg-red-600 text-white py-2 px-3">
-      <div className="container flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Clock className="w-3.5 h-3.5 shrink-0 animate-pulse" />
-          <p className="text-xs font-bold whitespace-nowrap">
-            🔥 OFERTA RELÂMPAGO —&nbsp;
-            <span className="font-mono">
-              {String(timeLeft.hours).padStart(2,"0")}h{" "}
-              {String(timeLeft.minutes).padStart(2,"0")}m{" "}
-              {String(timeLeft.seconds).padStart(2,"0")}s
-            </span>
-          </p>
-        </div>
-        <a
-          href="https://meli.la/1L5ue6P"
-          target="_blank" rel="noopener noreferrer"
-          className="hidden sm:block bg-white text-red-600 px-3 py-1 rounded font-black text-xs hover:bg-gray-100 transition-colors shrink-0"
-        >
-          Ver Ofertas →
-        </a>
-        <button onClick={() => setIsVisible(false)} className="p-0.5 hover:bg-white/20 rounded shrink-0">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
+const CATEGORIES = [
+  { label: "Todos os Perfumes", href: "#produtos", key: "todos" },
+  { label: "Árabes",            href: "#produtos", key: "arabe" },
+  { label: "Femininos",         href: "#produtos", key: "feminino" },
+  { label: "Masculinos",        href: "#produtos", key: "masculino" },
+  { label: "Body Splash",       href: "#produtos", key: "body_splash" },
+  { label: "Importados",        href: "#produtos", key: "inter" },
+  { label: "Promoções",         href: "#produtos", key: "top" },
+];
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled]     = useState(false);
+
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 2);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  const handleCategoryClick = (key: string) => {
+    setMobileOpen(false);
+    // Dispara evento para ProductsSection ouvir
+    window.dispatchEvent(new CustomEvent("afiml:category", { detail: key }));
+    const el = document.getElementById("produtos");
+    if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  };
 
   return (
     <div className="sticky top-0 z-50">
-      {/* Trust strip */}
-      <div className="bg-zinc-900 text-white text-center py-1.5 px-4 text-[11px] font-semibold tracking-wide">
-        🛡 Parceiro Mercado Livre &nbsp;·&nbsp; 🚚 Frete Full &nbsp;·&nbsp; ⭐ +5.000 Avaliações
+      {/* Announce bar */}
+      <div style={{ background: "var(--primary)", color: "#fff" }}
+        className="text-center py-2 px-4 text-xs font-semibold tracking-wide">
+        Frete grátis em produtos selecionados &nbsp;·&nbsp; Compra 100% segura via Mercado Livre
       </div>
 
       {/* Main header */}
-      <header className="w-full bg-white border-b border-gray-200 shadow-sm">
-        <div className="container flex items-center justify-between h-14">
-          {/* Logo — mix-blend-mode:multiply apaga fundo cinza/branco da PNG */}
-          <a href="/" className="flex items-center">
+      <header
+        className="w-full bg-white"
+        style={{ borderBottom: "1px solid var(--border)", boxShadow: scrolled ? "0 2px 12px rgba(0,0,0,.06)" : "none", transition: "box-shadow .2s" }}
+      >
+        <div className="container flex items-center justify-between h-16 gap-4">
+          {/* Logo */}
+          <a href="/" className="flex-shrink-0">
             <img
               src="/products/logomarca.png"
               alt="Marusso Parfum"
-              className="h-9 w-auto object-contain"
+              className="h-10 w-auto object-contain"
               style={{ mixBlendMode: "multiply" }}
             />
           </a>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-7">
-            <a href="#produtos" className="text-sm text-gray-700 hover:text-primary transition-colors font-medium">Produtos</a>
-            <a href="#como-funciona" className="text-sm text-gray-700 hover:text-primary transition-colors font-medium">Como Funciona</a>
-            <a href="#avaliacoes" className="text-sm text-gray-700 hover:text-primary transition-colors font-medium">Avaliações</a>
-            <Link href="/faq" className="text-sm text-gray-700 hover:text-primary transition-colors font-medium">FAQ</Link>
+          <nav className="hidden lg:flex items-center gap-6">
+            <a href="#produtos" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">Produtos</a>
+            <a href="#avaliacoes" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">Avaliações</a>
+            <Link href="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">FAQ</Link>
           </nav>
 
-          {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-yellow-400/50 bg-yellow-50">
-              <span className="text-yellow-600 text-xs font-bold">🛒 Mercado Livre</span>
-            </div>
+          {/* Desktop CTA */}
+          <div className="hidden lg:flex items-center gap-3">
             <a
-              href="https://wa.me/5519997051919?text=Olá%2C%20gostaria%20de%20mais%20informações%20sobre%20os%20perfumes%20árabes"
+              href="https://wa.me/5519997051919?text=Olá,%20quero%20saber%20mais%20sobre%20os%20perfumes"
               target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-xs font-semibold"
+              className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
               WhatsApp
             </a>
             <a
               href="#produtos"
-              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors text-sm font-black"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-md text-white transition-all hover:opacity-90 active:scale-95"
+              style={{ background: "var(--primary)" }}
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              Ver Ofertas
+              <ShoppingBag className="w-4 h-4" />
+              Ver Perfumes
             </a>
           </div>
 
-          {/* Mobile: WPP + burger */}
-          <div className="flex md:hidden items-center gap-2">
-            <a
-              href="https://wa.me/5519997051919?text=Olá%2C%20gostaria%20de%20mais%20informações%20sobre%20os%20perfumes%20árabes"
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center w-9 h-9 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
+          {/* Mobile */}
+          <div className="flex lg:hidden items-center gap-2">
             <a
               href="#produtos"
-              className="flex items-center gap-1 px-3 py-2 bg-primary text-primary-foreground rounded-md text-xs font-black"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-md text-white"
+              style={{ background: "var(--primary)" }}
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              Ofertas
+              Perfumes
             </a>
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="flex items-center justify-center w-9 h-9 border border-gray-200 rounded-md text-gray-600 hover:bg-gray-50"
+              className="w-9 h-9 flex items-center justify-center rounded-md border text-gray-600 hover:bg-gray-50"
+              style={{ borderColor: "var(--border)" }}
             >
-              <Menu className="w-4 h-4" />
+              {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
+        {/* Mobile menu */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-1">
-            {[
-              { label: "Produtos", href: "#produtos" },
-              { label: "Como Funciona", href: "#como-funciona" },
-              { label: "Avaliações", href: "#avaliacoes" },
-            ].map(l => (
-              <a
-                key={l.label}
-                href={l.href}
-                onClick={() => setMobileOpen(false)}
-                className="block py-2.5 px-3 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md font-medium"
+          <div className="lg:hidden border-t bg-white px-4 py-4 space-y-1" style={{ borderColor: "var(--border)" }}>
+            <p className="text-[11px] uppercase tracking-widest font-bold text-gray-400 px-3 mb-2">Categorias</p>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.key}
+                onClick={() => handleCategoryClick(cat.key)}
+                className="w-full text-left py-2.5 px-3 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md font-medium transition-colors"
               >
-                {l.label}
-              </a>
+                {cat.label}
+              </button>
             ))}
-            <Link
-              href="/faq"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2.5 px-3 text-sm text-gray-700 hover:text-primary hover:bg-gray-50 rounded-md font-medium"
-            >
-              FAQ
-            </Link>
+            <div className="pt-3 border-t mt-3" style={{ borderColor: "var(--border)" }}>
+              <a
+                href="https://wa.me/5519997051919?text=Olá,%20quero%20saber%20mais%20sobre%20os%20perfumes"
+                target="_blank" rel="noopener noreferrer"
+                className="block text-center py-2.5 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                Falar no WhatsApp
+              </a>
+              <Link
+                href="/faq"
+                onClick={() => setMobileOpen(false)}
+                className="block text-center py-2.5 px-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+              >
+                Perguntas Frequentes
+              </Link>
+            </div>
           </div>
         )}
       </header>
 
-      {/* Promo banner — DENTRO do sticky, nunca se sobrepõe */}
-      <PromoBanner />
+      {/* Category nav bar — desktop only */}
+      <div className="hidden lg:block bg-white border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="container">
+          <div className="flex items-center gap-0 overflow-x-auto">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.key}
+                onClick={() => handleCategoryClick(cat.key)}
+                className="px-4 py-3 text-sm text-gray-600 hover:text-gray-900 font-medium whitespace-nowrap transition-colors border-b-2 border-transparent hover:border-gray-300"
+                style={{ borderBottomColor: undefined }}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
