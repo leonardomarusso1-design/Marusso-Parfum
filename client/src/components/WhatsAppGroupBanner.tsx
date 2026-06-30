@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const WA_GROUP_LINK = "https://chat.whatsapp.com/LINK_DO_SEU_GRUPO"; // ← substitua pelo link do grupo
+const WA_GROUP_LINK = "https://chat.whatsapp.com/E88bPy29KtWDR87PieKlAD"; // ← substitua pelo link do grupo
 
 export default function WhatsAppGroupBanner() {
   const [dismissed, setDismissed] = useState(false);
