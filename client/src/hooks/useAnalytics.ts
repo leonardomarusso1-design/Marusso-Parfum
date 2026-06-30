@@ -1,15 +1,13 @@
 import { useEffect } from "react";
-import { initGoogleAnalytics, initFacebookPixel, trackPageView } from "@/lib/analytics";
+import { initGoogleAnalytics } from "@/lib/analytics";
 
 export const useAnalytics = () => {
   useEffect(() => {
-    // Inicializar Google Analytics
+    // Google Analytics (opcional via VITE_GOOGLE_ANALYTICS_ID)
     initGoogleAnalytics();
 
-    // Inicializar Facebook Pixel
-    initFacebookPixel();
-
-    // Track página inicial
-    trackPageView("/", "Perfumes Árabes - Home");
+    // ❌ NÃO chamar initFacebookPixel aqui —
+    // o pixel já está carregado e inicializado no index.html
+    // Chamar novamente causa "Duplicate Pixel ID" e disparo duplo de PageView
   }, []);
 };

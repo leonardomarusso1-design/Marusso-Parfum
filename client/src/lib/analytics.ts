@@ -106,11 +106,16 @@ export const trackPurchase = (orderId: string, totalValue: number, items: any[])
 };
 
 // Track Page View
+// Nota: PageView já é disparado no index.html — aqui só enviamos para GA
 export const trackPageView = (pagePath: string, pageTitle: string) => {
-  trackEvent("page_view", {
-    page_path: pagePath,
-    page_title: pageTitle,
-  });
+  // Google Analytics
+  if ((window as any).gtag) {
+    (window as any).gtag("event", "page_view", {
+      page_path: pagePath,
+      page_title: pageTitle,
+    });
+  }
+  // Meta Pixel: PageView já foi disparado no index.html — não repetir aqui
 };
 
 // Track Click
