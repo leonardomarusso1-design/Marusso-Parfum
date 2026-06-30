@@ -29,6 +29,7 @@ export interface Product {
   origin?: string;
   stock_status?: string;
   frete?: string;
+  perfume_type?: string;
 }
 
 // ── Detecta família olfativa pelo nome/descrição ───────────────────────────

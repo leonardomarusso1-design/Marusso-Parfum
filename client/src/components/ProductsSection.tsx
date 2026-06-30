@@ -5,16 +5,16 @@ import { ShoppingBag, SlidersHorizontal, ChevronDown, Flame, Star } from "lucide
 import type { Product } from "./ProductCard";
 
 const CATEGORIES = [
-  { key: "todos",      label: "Todos" },
-  { key: "feminino",   label: "♀ Femininos" },
-  { key: "masculino",  label: "♂ Masculinos" },
-  { key: "unissex",    label: "Unissex" },
-  { key: "frete",      label: "✈️ Frete Grátis" },
-  { key: "brasil",     label: "🇧🇷 Brasil" },
-  { key: "inter",      label: "🌎 Importados" },
-  { key: "novidade",   label: "✨ Novidades" },
-  { key: "top",        label: "🔥 Mais Vendidos" },
-  { key: "ate200",     label: "💰 Até R$200" },
+  { key: "todos",       label: "Todos" },
+  { key: "arabe",       label: "🌙 Árabes" },
+  { key: "body_splash", label: "💦 Body Splash" },
+  { key: "feminino",    label: "♀ Femininos" },
+  { key: "masculino",   label: "♂ Masculinos" },
+  { key: "frete",       label: "✈️ Frete Grátis" },
+  { key: "inter",       label: "🌎 Importados" },
+  { key: "novidade",    label: "✨ Novidades" },
+  { key: "top",         label: "🔥 Mais Vendidos" },
+  { key: "ate200",      label: "💰 Até R$200" },
 ];
 
 const OLFACTORY_FILTERS = [
@@ -125,15 +125,15 @@ export default function ProductsSection() {
 
   // Filtra por categoria
   const byCat = adapted.filter(p => {
-    if (activeCategory === "feminino")  return p.gender === "feminino";
-    if (activeCategory === "masculino") return p.gender === "masculino";
-    if (activeCategory === "unissex")   return p.gender === "unissex";
-    if (activeCategory === "frete")     return p.free_shipping === true || !!p.frete;
-    if (activeCategory === "brasil")    return p.origin !== "internacional";
-    if (activeCategory === "inter")     return p.origin === "internacional";
-    if (activeCategory === "novidade")  return p.is_new === true;
-    if (activeCategory === "top")       return p.is_best_seller === true;
-    if (activeCategory === "ate200")    return p.price <= 200;
+    if (activeCategory === "arabe")       return (p as any).perfume_type === "arabe";
+    if (activeCategory === "body_splash") return (p as any).perfume_type === "body_splash";
+    if (activeCategory === "feminino")    return p.gender === "feminino";
+    if (activeCategory === "masculino")   return p.gender === "masculino";
+    if (activeCategory === "frete")       return p.free_shipping === true || !!p.frete;
+    if (activeCategory === "inter")       return p.origin === "internacional" || (p as any).perfume_type === "importado";
+    if (activeCategory === "novidade")    return p.is_new === true;
+    if (activeCategory === "top")         return p.is_best_seller === true;
+    if (activeCategory === "ate200")      return p.price <= 200;
     return true;
   });
 
@@ -157,9 +157,12 @@ export default function ProductsSection() {
 
   // Contagens para badges
   const counts: Record<string, number> = {
-    frete:    adapted.filter(p => p.free_shipping || !!p.frete).length,
-    novidade: adapted.filter(p => p.is_new).length,
-    top:      adapted.filter(p => p.is_best_seller).length,
+    arabe:       adapted.filter(p => (p as any).perfume_type === "arabe").length,
+    body_splash: adapted.filter(p => (p as any).perfume_type === "body_splash").length,
+    frete:       adapted.filter(p => p.free_shipping || !!p.frete).length,
+    novidade:    adapted.filter(p => p.is_new).length,
+    top:         adapted.filter(p => p.is_best_seller).length,
+    inter:       adapted.filter(p => p.origin === "internacional" || (p as any).perfume_type === "importado").length,
   };
 
   // Contagens olfativas

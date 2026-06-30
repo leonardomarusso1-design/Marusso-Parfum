@@ -59,6 +59,7 @@ export default async function handler(req, res) {
       origin:          b.origin || "brasil",
       stock_status:    b.stock_status || "",
       frete:           b.frete || "",
+      perfume_type:    b.perfume_type || "perfume",
       active:          true,
     };
 

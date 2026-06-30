@@ -14,12 +14,13 @@ interface Product {
   active?: boolean; description?: string; features?: string[];
   in_stock?: boolean; free_shipping?: boolean; is_best_seller?: boolean;
   is_new?: boolean; origin?: string; stock_status?: string; frete?: string;
+  perfume_type?: string;
 }
 
 const emptyProduct: Partial<Product> = {
   name: "", brand: "", price: 0, original_price: undefined, discount: 0,
   image: "", images: [], affiliate_link: "", badge: "", gender: "unissex",
-  active: true, origin: "brasil",
+  active: true, origin: "brasil", perfume_type: "perfume",
 };
 
 // ── Componente Gerenciador de Imagens ─────────────────────────────────────
@@ -562,6 +563,18 @@ export default function Admin() {
                     <option value="internacional">🌎 Internacional</option>
                   </select>
                 </div>
+              </div>
+
+              {/* ── Tipo de perfume ── */}
+              <div>
+                <label className="block text-xs text-gray-500 font-semibold mb-1">Tipo de Perfume</label>
+                <select value={(editProduct as any).perfume_type || "perfume"} onChange={e => setField("perfume_type", e.target.value)}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-sm">
+                  <option value="perfume">🧴 Perfume Nacional</option>
+                  <option value="arabe">🌙 Árabe</option>
+                  <option value="body_splash">💦 Body Splash</option>
+                  <option value="importado">🌎 Importado</option>
+                </select>
               </div>
 
               {/* ── Checkboxes de atributos ── */}
